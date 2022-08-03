@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace JsonServer;
 
 use InvalidArgumentException;
-use JsonServer\Exceptions\NotFoundEntityException;
+use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 
 class Database
 {
@@ -43,7 +43,7 @@ class Database
     public function from(string $entityName): Repository
     {
         if (! array_key_exists($entityName, $this->entities)) {
-            throw new NotFoundEntityException("entity $entityName not found");
+            throw new NotFoundEntityRepositoryException("entity $entityName not found");
         }
 
         return new Repository($entityName, $this->entities[$entityName], $this);

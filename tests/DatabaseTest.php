@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use JsonServer\Database;
-use JsonServer\Exceptions\NotFoundEntityException;
+use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 
 test('should return data from entity', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
@@ -88,7 +88,7 @@ test('should throw a exception if entity not exists', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
     $database->from('entityNotFound')->get();
-})->throws(NotFoundEntityException::class);
+})->throws(NotFoundEntityRepositoryException::class);
 
 test('should update an entity', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-update.json';

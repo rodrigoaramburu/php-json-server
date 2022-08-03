@@ -6,6 +6,7 @@ namespace JsonServer;
 
 use Exception;
 use JsonServer\Exceptions\NotFoundEntityException;
+use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
@@ -25,7 +26,7 @@ class Server
         if (in_array($method, ['GET', 'POST', 'PUT', 'DELETE'])) {
             try {
                 return call_user_func([$this, strtolower($method)], $parsedUri, $body);
-            } catch (NotFoundEntityException $e) {
+            } catch (NotFoundEntityException|NotFoundEntityRepositoryException  $e) {
                 $bodyResponse = $this->psr17Factory->createStream(json_encode([
                     'statusCode' => 404,
                     'message' => 'Not Found',
@@ -46,7 +47,7 @@ class Server
         } else {
             $data = $repository->find($parsedUri->entity(0)->id);
             if ($data === null) {
-                throw new NotFoundEntityException('entity not exists');
+                throw new NotFoundEntityRepositoryException('entity not exists');
             }
         }
 
@@ -65,6 +66,29 @@ class Server
 
         return $this->psr17Factory
             ->createResponse(201)
+            ->withBody($bodyResponse)
+            ->withHeader('Content-type', 'application/json');
+    }
+
+    private function put(ParsedUri $parsedUri, string $body): ResponseInterface
+    {
+        $repository = $this->database->from($parsedUri->entity(0)->name);
+
+        try {
+            $data = $repository->update(
+                $parsedUri->entity(0)->id,
+                json_decode($body, true)
+            );
+            $statusCode = 200;
+        } catch (NotFoundEntityException $e) {
+            $statusCode = 201;
+            $data = $repository->save(json_decode($body, true));
+        }
+
+        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
+
+        return $this->psr17Factory
+            ->createResponse($statusCode)
             ->withBody($bodyResponse)
             ->withHeader('Content-type', 'application/json');
     }
