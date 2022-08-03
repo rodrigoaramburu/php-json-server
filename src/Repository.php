@@ -44,6 +44,20 @@ class Repository
         return $data;
     }
 
+    public function update(int $id, $data): array
+    {
+        for ($i = 0; $i < count($this->entityData); $i++) {
+            if ($this->entityData[$i]['id'] === $data['id']) {
+                $this->entityData[$i] = $data;
+                break;
+            }
+        }
+
+        $this->database->save($this->entityName, $this->entityData);
+
+        return $data;
+    }
+
     private function nextId(): int
     {
         $ids = array_column($this->entityData, 'id');
