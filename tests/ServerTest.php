@@ -73,3 +73,38 @@ test('should send the response to the stdout', function () {
     expect($result)->toBe('data');
     expect($headers)->toContain('Content-type: application/json');
 });
+
+test('should save data from a post request', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-save.json';
+
+    file_put_contents($dbFileJson, '{"posts": []}');
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('POST', '/posts', json_encode([
+        'title' => 'Title Test 1',
+        'author' => 'Author Test 1',
+        'content' => 'Content Test 1',
+    ]));
+
+    expect($response->getStatusCode())->toBe(201);
+
+    expect((string) $response->getBody())->toBeJson();
+    expect((string) $response->getBody())
+        ->json()
+        ->id->toBe(1)
+        ->title->toBe('Title Test 1')
+        ->author->toBe('Author Test 1')
+        ->content->toBe('Content Test 1');
+
+    $dataDb = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($dataDb['posts'][0])->toMatchArray([
+        'id' => 1,
+        'title' => 'Title Test 1',
+        'author' => 'Author Test 1',
+        'content' => 'Content Test 1',
+    ]);
+
+    unlink($dbFileJson);
+});

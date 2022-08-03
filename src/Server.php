@@ -55,8 +55,24 @@ class Server
         return $this->psr17Factory->createResponse(200)->withBody($bodyResponse)->withHeader('Content-type', 'application/json');
     }
 
+    private function post(ParsedUri $parsedUri, string $body): ResponseInterface
+    {
+        $repository = $this->database->from($parsedUri->entity(0)->name);
+
+        $data = $repository->save(json_decode($body, true));
+
+        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
+
+        return $this->psr17Factory
+            ->createResponse(201)
+            ->withBody($bodyResponse)
+            ->withHeader('Content-type', 'application/json');
+    }
+
     public function send(ResponseInterface $response): void
     {
+        http_response_code($response->getStatusCode());
+
         foreach ($response->getHeaders() as $key => $value) {
             header("$key: {$value[0]}");
         }

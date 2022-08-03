@@ -33,13 +33,15 @@ class Repository
         return $data;
     }
 
-    public function save(array $data): void
+    public function save(array $data): array
     {
         $data = ['id' => $this->nextId()] + $data;
 
         array_push($this->entityData, $data);
 
         $this->database->save($this->entityName, $this->entityData);
+
+        return $data;
     }
 
     private function nextId(): int
