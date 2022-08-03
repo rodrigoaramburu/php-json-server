@@ -70,6 +70,7 @@ class Repository
         }
 
         unset($this->entityData[$pos]);
+        $this->entityData = array_values($this->entityData);
         $this->database->save($this->entityName, $this->entityData);
     }
 

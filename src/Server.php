@@ -93,6 +93,18 @@ class Server
             ->withHeader('Content-type', 'application/json');
     }
 
+
+    public function delete(ParsedUri $parsedUri, string $body): ResponseInterface
+    {
+        $repository = $this->database->from($parsedUri->entity(0)->name);
+
+        $repository->delete($parsedUri->entity(0)->id);
+
+        return $this->psr17Factory
+            ->createResponse(204)
+            ->withHeader('Content-type', 'application/json');
+    }
+
     public function send(ResponseInterface $response): void
     {
         http_response_code($response->getStatusCode());

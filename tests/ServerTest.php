@@ -5,6 +5,21 @@ declare(strict_types=1);
 use JsonServer\Server;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
+afterEach(function(){
+    $files = [
+        __Dir__ . '/fixture/db-posts-save.json',
+        __Dir__ . '/fixture/db-posts-update.json',
+        __Dir__ . '/fixture/db-posts-delete.json'
+    ];
+
+    foreach($files as $file){
+        if(file_exists($file)){
+            unlink($file);
+        }
+    }
+});
+
+
 test('should return data from a entity', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
@@ -175,4 +190,45 @@ test('should create an entity if entity not exists on a request put', function (
         'author' => 'Author put new',
         'content' => 'Content put new',
     ]);
+});
+
+
+test('should delete an entity', function(){
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1', '');
+
+    expect($response->getStatusCode())->toBe(204);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['posts'])->toHaveCount(1);
+
+    expect($data['posts'][0])->toMatchArray([
+        'id' => 2,
+        'title' => 'Duis quis arcu mi',
+        'author' => 'Rodrigo',
+        'content' => 'Suspendisse auctor dolor risus, vel posuere libero...'
+    ]);
+});
+
+test('should return error if id not exists on delete', function(){
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+
+    $response = $server->handle('DELETE', '/posts/42', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    expect((string) $response->getBody())->toBeJson();
+    expect((string) $response->getBody())
+        ->json()
+        ->statusCode->toBe(404)
+        ->message->toBe('Not Found');
+
+
 });
