@@ -1,0 +1,28 @@
+{
+    "name": "rodrigoaramburu/json-server",
+    "type": "library",
+    "description": "Biblioteca para criar uma API Rest fake para prototipação de front-end",
+    "autoload": {
+        "psr-4": {
+            "JsonServer\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Rodrigo Aramburu",
+            "email": "rodrigoaramburu@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "laravel/pint": "^1.1",
+        "pestphp/pest": "^1.21"
+    },
+    "require": {
+        "nyholm/psr7": "^1.5"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}

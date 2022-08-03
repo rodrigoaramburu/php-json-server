@@ -1,0 +1,5 @@
+/vendor/
+/.vscode
+/workspace
+/coverage
+.phpunit.result.cache

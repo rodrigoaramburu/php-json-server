@@ -1,0 +1,16 @@
+{
+    "posts":[
+        {   
+            "id": 1,
+            "title":"Lorem ipsum dolor sit amet",
+            "author": "Rodrigo",
+            "content": "Nunc volutpat ipsum eget sapien ornare..."
+        },
+        {
+            "id": 2,
+            "title":"Duis quis arcu mi",
+            "author": "Rodrigo",
+            "content": "Suspendisse auctor dolor risus, vel posuere libero..."
+        }
+    ]
+}
