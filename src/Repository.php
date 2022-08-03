@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use JsonServer\Exceptions\NotFoundEntityException;
+
 class Repository
 {
     public function __construct(
@@ -38,6 +40,21 @@ class Repository
         $data = ['id' => $this->nextId()] + $data;
 
         array_push($this->entityData, $data);
+
+        $this->database->save($this->entityName, $this->entityData);
+
+        return $data;
+    }
+
+    public function update(int $id, $data): array
+    {
+        $pos = array_search($id, array_column($this->entityData, 'id'), true);
+
+        if ($pos === false) {
+            throw new NotFoundEntityException();
+        }
+        $data = ['id' => $id] + $data;
+        $this->entityData[$pos] = $data;
 
         $this->database->save($this->entityName, $this->entityData);
 

@@ -108,3 +108,71 @@ test('should save data from a post request', function () {
 
     unlink($dbFileJson);
 });
+
+test('should update data from a put request', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('PUT', '/posts/2', json_encode([
+        'id' => 2,
+        'title' => 'Title Test changed',
+        'author' => 'Author Test changed',
+        'content' => 'Content Test changed',
+    ]));
+
+    expect($response->getStatusCode())->toBe(200);
+
+    expect((string) $response->getBody())->toBeJson();
+    expect((string) $response->getBody())
+        ->json()
+        ->id->toBe(2)
+        ->title->toBe('Title Test changed')
+        ->author->toBe('Author Test changed')
+        ->content->toBe('Content Test changed');
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['posts'][1])->toMatchArray([
+        'id' => 2,
+        'title' => 'Title Test changed',
+        'author' => 'Author Test changed',
+        'content' => 'Content Test changed',
+    ]);
+});
+
+test('should create an entity if entity not exists on a request put', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('PUT', '/posts/3', json_encode([
+        'id' => 3,
+        'title' => 'Title put new',
+        'author' => 'Author put new',
+        'content' => 'Content put new',
+    ]));
+
+    expect($response->getStatusCode())->toBe(201);
+
+    expect((string) $response->getBody())->toBeJson();
+    expect((string) $response->getBody())
+        ->json()
+        ->id->toBe(3)
+        ->title->toBe('Title put new')
+        ->author->toBe('Author put new')
+        ->content->toBe('Content put new');
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['posts'][2])->toMatchArray([
+        'id' => 3,
+        'title' => 'Title put new',
+        'author' => 'Author put new',
+        'content' => 'Content put new',
+    ]);
+});
