@@ -49,16 +49,28 @@ class Repository
     public function update(int $id, $data): array
     {
         $pos = array_search($id, array_column($this->entityData, 'id'), true);
-
+        
         if ($pos === false) {
             throw new NotFoundEntityException();
         }
         $data = ['id' => $id] + $data;
         $this->entityData[$pos] = $data;
-
+        
         $this->database->save($this->entityName, $this->entityData);
-
+        
         return $data;
+    }
+    
+    public function delete(int $id): void
+    {
+        $pos = array_search($id, array_column($this->entityData, 'id'), true);
+        
+        if ($pos === false) {
+            throw new NotFoundEntityException();
+        }
+
+        unset($this->entityData[$pos]);
+        $this->database->save($this->entityName, $this->entityData);
     }
 
     private function nextId(): int
