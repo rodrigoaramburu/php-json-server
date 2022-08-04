@@ -390,3 +390,10 @@ test('should return 404 if not send a id on delete request', function () {
 
     expect($response->getStatusCode())->toBe(404);
 });
+
+test('should accept null body', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $response = $server->handle('GET', '/posts', null);
+
+    expect($response->getStatusCode())->toBe(200);
+});

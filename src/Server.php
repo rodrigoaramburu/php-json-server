@@ -24,7 +24,7 @@ class Server
         $this->inflector = InflectorFactory::create()->build();
     }
 
-    public function handle(string $method, string $uri, string $body): ResponseInterface
+    public function handle(string $method, string $uri, ?string $body): ResponseInterface
     {
         $parsedUri = ParsedUri::parseUri($uri);
 
@@ -43,7 +43,7 @@ class Server
         throw new Exception('http method não encontrado');
     }
 
-    private function get(ParsedUri $parsedUri, string $body): ResponseInterface
+    private function get(ParsedUri $parsedUri, ?string $body): ResponseInterface
     {
         $query = $this->database->from($parsedUri->currentEntity->name)->query();
 
@@ -72,7 +72,7 @@ class Server
                         ->withHeader('Content-type', 'application/json');
     }
 
-    private function post(ParsedUri $parsedUri, string $body): ResponseInterface
+    private function post(ParsedUri $parsedUri, ?string $body): ResponseInterface
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
@@ -90,7 +90,7 @@ class Server
             ->withHeader('Content-type', 'application/json');
     }
 
-    private function put(ParsedUri $parsedUri, string $body): ResponseInterface
+    private function put(ParsedUri $parsedUri, ?string $body): ResponseInterface
     {
         if ($parsedUri->currentEntity->id === null) {
             throw new NotFoundEntityException('entity not found');
@@ -125,7 +125,7 @@ class Server
             ->withHeader('Content-type', 'application/json');
     }
 
-    public function delete(ParsedUri $parsedUri, string $body): ResponseInterface
+    public function delete(ParsedUri $parsedUri, ?string $body): ResponseInterface
     {
         if ($parsedUri->currentEntity->id === null) {
             throw new NotFoundEntityException('entity not found');
