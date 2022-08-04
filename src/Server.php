@@ -40,12 +40,20 @@ class Server
 
     private function get(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $query = $this->database->from($parsedUri->currentEntity->name)->query();
 
-        if ($parsedUri->entity(0)->id === null) {
-            $data = $repository->get();
+        if ($parsedUri->currentEntity->parent !== null) {
+            $query = $query
+                        ->whereParent(
+                            entityName: $parsedUri->currentEntity->parent->name,
+                            id: $parsedUri->currentEntity->parent->id
+                        );
+        }
+
+        if ($parsedUri->currentEntity->id === null) {
+            $data = $query->get();
         } else {
-            $data = $repository->find($parsedUri->entity(0)->id);
+            $data = $query->find($parsedUri->currentEntity->id);
             if ($data === null) {
                 throw new NotFoundEntityRepositoryException('entity not exists');
             }
@@ -53,12 +61,15 @@ class Server
 
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
-        return $this->psr17Factory->createResponse(200)->withBody($bodyResponse)->withHeader('Content-type', 'application/json');
+        return $this->psr17Factory
+                        ->createResponse(200)
+                        ->withBody($bodyResponse)
+                        ->withHeader('Content-type', 'application/json');
     }
 
     private function post(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $repository = $this->database->from($parsedUri->currentEntity->name);
 
         $data = $repository->save(json_decode($body, true));
 
@@ -72,11 +83,11 @@ class Server
 
     private function put(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $repository = $this->database->from($parsedUri->currentEntity->name);
 
         try {
             $data = $repository->update(
-                $parsedUri->entity(0)->id,
+                $parsedUri->currentEntity->id,
                 json_decode($body, true)
             );
             $statusCode = 200;
@@ -93,12 +104,11 @@ class Server
             ->withHeader('Content-type', 'application/json');
     }
 
-
     public function delete(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $repository->delete($parsedUri->entity(0)->id);
+        $repository->delete($parsedUri->currentEntity->id);
 
         return $this->psr17Factory
             ->createResponse(204)

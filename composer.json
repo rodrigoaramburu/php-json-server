@@ -18,7 +18,8 @@
         "pestphp/pest": "^1.21"
     },
     "require": {
-        "nyholm/psr7": "^1.5"
+        "nyholm/psr7": "^1.5",
+        "doctrine/inflector": "^2.0"
     },
     "config": {
         "allow-plugins": {

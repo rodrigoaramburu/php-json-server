@@ -12,5 +12,22 @@
             "author": "Rodrigo",
             "content": "Suspendisse auctor dolor risus, vel posuere libero..."
         }
+    ],
+    "comments": [
+        {
+            "id": 1,
+            "post_id": 1,
+            "comment": "Pellentesque id orci sodales, dignissim massa vel"
+        },
+        {
+            "id": 2,
+            "post_id": 2,
+            "comment": "Maecenas elit dui, venenatis ut erat vitae"
+        },
+        {
+            "id": 3,
+            "post_id": 1,
+            "comment": "Quisque velit tellus, tempus vitae condimentum nec"
+        }
     ]
 }

@@ -5,20 +5,19 @@ declare(strict_types=1);
 use JsonServer\Server;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
-afterEach(function(){
+afterEach(function () {
     $files = [
-        __Dir__ . '/fixture/db-posts-save.json',
-        __Dir__ . '/fixture/db-posts-update.json',
-        __Dir__ . '/fixture/db-posts-delete.json'
+        __DIR__.'/fixture/db-posts-save.json',
+        __DIR__.'/fixture/db-posts-update.json',
+        __DIR__.'/fixture/db-posts-delete.json',
     ];
 
-    foreach($files as $file){
-        if(file_exists($file)){
+    foreach ($files as $file) {
+        if (file_exists($file)) {
             unlink($file);
         }
     }
 });
-
 
 test('should return data from a entity', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
@@ -192,8 +191,7 @@ test('should create an entity if entity not exists on a request put', function (
     ]);
 });
 
-
-test('should delete an entity', function(){
+test('should delete an entity', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -212,12 +210,11 @@ test('should delete an entity', function(){
         'id' => 2,
         'title' => 'Duis quis arcu mi',
         'author' => 'Rodrigo',
-        'content' => 'Suspendisse auctor dolor risus, vel posuere libero...'
+        'content' => 'Suspendisse auctor dolor risus, vel posuere libero...',
     ]);
 });
 
-test('should return error if id not exists on delete', function(){
-
+test('should return error if id not exists on delete', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
     $response = $server->handle('DELETE', '/posts/42', '');
@@ -229,6 +226,29 @@ test('should return error if id not exists on delete', function(){
         ->json()
         ->statusCode->toBe(404)
         ->message->toBe('Not Found');
+});
 
+test('should return entities with relationship', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
+    $response = $server->handle('GET', '/posts/1/comments', '');
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $responseData = json_decode((string) $response->getBody(), true);
+
+    expect($responseData)->toHaveCount(2);
+
+    expect($responseData)->toMatchArray([
+        [
+            'id' => 1,
+            'post_id' => 1,
+            'comment' => 'Pellentesque id orci sodales, dignissim massa vel',
+        ],
+        [
+            'id' => 3,
+            'post_id' => 1,
+            'comment' => 'Quisque velit tellus, tempus vitae condimentum nec',
+        ],
+    ]);
 });

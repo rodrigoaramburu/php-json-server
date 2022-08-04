@@ -9,7 +9,7 @@ use stdClass;
 class ParsedUri
 {
     private function __construct(
-        private readonly array $entities,
+        public readonly ?object $currentEntity
     ) {
     }
 
@@ -21,21 +21,18 @@ class ParsedUri
         $parts = explode('/', $path);
         $parts = array_values(array_filter($parts, fn ($v) => ! empty($v)));
 
-        $entities = [];
+        $parent = null;
+        $currentEntity = null;
         for ($i = 0; $i < count($parts); $i += 2) {
-            $en = new stdClass;
-            $en->name = $parts[$i];
-            $en->id = array_key_exists($i + 1, $parts) ? (int) $parts[$i + 1] : null;
-            $entities[] = $en;
+            $tmp = $currentEntity;
+            $currentEntity = new stdClass;
+            $currentEntity->name = $parts[$i];
+            $currentEntity->id = array_key_exists($i + 1, $parts) ? (int) $parts[$i + 1] : null;
+            $currentEntity->parent = $tmp;
         }
 
         return new ParsedUri(
-            entities: $entities
+            currentEntity: $currentEntity
         );
-    }
-
-    public function entity(int $index): object
-    {
-        return $this->entities[$index];
     }
 }
