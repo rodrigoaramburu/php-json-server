@@ -7,6 +7,7 @@ namespace JsonServer;
 use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use Exception;
+use JsonServer\Exceptions\EmptyBodyException;
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 use JsonServer\Utils\ParsedUri;
@@ -37,7 +38,20 @@ class Server
                     'message' => 'Not Found',
                 ]));
 
-                return $this->psr17Factory->createResponse(404)->withBody($bodyResponse)->withHeader('Content-type', 'application/json');
+                return $this->psr17Factory
+                ->createResponse(404)
+                ->withBody($bodyResponse)
+                ->withHeader('Content-type', 'application/json');
+            } catch (EmptyBodyException $e) {
+                $bodyResponse = $this->psr17Factory->createStream(json_encode([
+                    'statusCode' => 400,
+                    'message' => 'Empty Body',
+                ]));
+
+                return $this->psr17Factory
+                    ->createResponse(400)
+                    ->withBody($bodyResponse)
+                    ->withHeader('Content-type', 'application/json');
             }
         }
         throw new Exception('http method não encontrado');
@@ -76,7 +90,7 @@ class Server
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $data = json_decode($body, true);
+        $data = $this->bodyDecode($body);
 
         $data = $this->includeParent($data, $parsedUri);
 
@@ -97,7 +111,7 @@ class Server
         }
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $entityData = json_decode($body, true);
+        $entityData = $this->bodyDecode($body);
 
         if ($parsedUri->currentEntity->parent !== null) {
             $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
@@ -181,5 +195,19 @@ class Server
         $data[$column] = $parsedUri->currentEntity->parent->id;
 
         return $data;
+    }
+
+    private function bodyDecode(?string $body): array
+    {
+        if ($body === null || $body === '') {
+            throw new EmptyBodyException();
+        }
+        $result = json_decode($body, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new EmptyBodyException();
+        }
+
+        return $result;
     }
 }

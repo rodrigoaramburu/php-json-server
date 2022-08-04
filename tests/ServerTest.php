@@ -397,3 +397,42 @@ test('should accept null body', function () {
 
     expect($response->getStatusCode())->toBe(200);
 });
+
+test('should return 400 if post request with empty body', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $response = $server->handle('POST', '/posts', null);
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
+});
+
+test('should return 400 if put request with empty body', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $response = $server->handle('PUT', '/posts/1', null);
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
+});
+
+test('should return 400 if post request with body format wrong', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $response = $server->handle('POST', '/posts', 'DDSS{}');
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
+});
