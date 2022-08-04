@@ -272,3 +272,56 @@ test('should save an entity with a relationship', function () {
         'comment' => 'comment in a relationship',
     ]);
 });
+
+test('should update an entity with a relationship', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
+        'comment' => 'modified comment',
+    ]));
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-update.json'), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'modified comment',
+    ]);
+});
+
+test('should return 404 if parent entitity in relationship does not exist', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/5/comments/2', json_encode([
+        'comment' => 'modified comment',
+    ]));
+
+    expect($response->getStatusCode())->toBe(404);
+});
+
+test('should change the relationship if pass the field of parent', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
+        'comment' => 'modified comment',
+        'post_id' => 1,
+    ]));
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-update.json'), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 1,
+        'comment' => 'modified comment',
+    ]);
+});

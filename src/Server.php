@@ -94,10 +94,19 @@ class Server
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
+        $entityData = json_decode($body, true);
+
+        if ($parsedUri->currentEntity->parent !== null) {
+            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+            if (! array_key_exists($column, $entityData)) {
+                $entityData = $this->includeParent($entityData, $parsedUri);
+            }
+        }
+
         try {
             $data = $repository->update(
                 $parsedUri->currentEntity->id,
-                json_decode($body, true)
+                $entityData
             );
             $statusCode = 200;
         } catch (NotFoundEntityException $e) {

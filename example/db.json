@@ -28,11 +28,6 @@
             "id": 3,
             "post_id": 1,
             "comment": "Quisque velit tellus, tempus vitae condimentum nec"
-        },
-        {
-            "id": 4,
-            "comment": "um coment\u00e1rio teste",
-            "post_id": 2
         }
     ]
 }
