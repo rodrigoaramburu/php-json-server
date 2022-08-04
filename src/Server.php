@@ -129,6 +129,19 @@ class Server
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
+        if ($parsedUri->currentEntity->parent !== null) {
+            $parentData = $this->database
+                ->from($parsedUri->currentEntity->parent->name)
+                   ->find($parsedUri->currentEntity->parent->id);
+
+            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+            $parentIdFromEntity = $repository->find($parsedUri->currentEntity->id)[$column];
+
+            if ($parentData === null || $parentIdFromEntity !== $parsedUri->currentEntity->parent->id) {
+                throw new NotFoundEntityException('entity not found');
+            }
+        }
+
         $repository->delete($parsedUri->currentEntity->id);
 
         return $this->psr17Factory

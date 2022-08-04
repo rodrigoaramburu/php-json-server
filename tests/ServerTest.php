@@ -338,3 +338,43 @@ test('should return 404 if id not found on put request', function () {
 
     expect($response->getStatusCode())->toBe(404);
 });
+
+test('should return 404 if parent entity id not exist', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/5/comments/2', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'Maecenas elit dui, venenatis ut erat vitae',
+    ]);
+});
+
+test('should return 404 if entity id not belongs to parent', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1/comments/2', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'Maecenas elit dui, venenatis ut erat vitae',
+    ]);
+});
