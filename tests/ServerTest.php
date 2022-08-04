@@ -325,3 +325,16 @@ test('should change the relationship if pass the field of parent', function () {
         'comment' => 'modified comment',
     ]);
 });
+
+test('should return 404 if id not found on put request', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments', json_encode([
+        'comment' => 'modified comment',
+        'post_id' => 1,
+    ]));
+
+    expect($response->getStatusCode())->toBe(404);
+});

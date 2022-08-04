@@ -92,6 +92,9 @@ class Server
 
     private function put(ParsedUri $parsedUri, string $body): ResponseInterface
     {
+        if ($parsedUri->currentEntity->id === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
         $entityData = json_decode($body, true);
