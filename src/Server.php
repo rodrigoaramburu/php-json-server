@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use Doctrine\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use Exception;
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
@@ -13,10 +15,13 @@ use Psr\Http\Message\ResponseInterface;
 
 class Server
 {
+    private Inflector $inflector;
+
     public function __construct(string $dbFileJson = 'db.json')
     {
         $this->database = new Database(dbFileJson: $dbFileJson);
         $this->psr17Factory = new Psr17Factory();
+        $this->inflector = InflectorFactory::create()->build();
     }
 
     public function handle(string $method, string $uri, string $body): ResponseInterface
@@ -40,12 +45,20 @@ class Server
 
     private function get(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $query = $this->database->from($parsedUri->currentEntity->name)->query();
 
-        if ($parsedUri->entity(0)->id === null) {
-            $data = $repository->get();
+        if ($parsedUri->currentEntity->parent !== null) {
+            $query = $query
+                        ->whereParent(
+                            entityName: $parsedUri->currentEntity->parent->name,
+                            id: $parsedUri->currentEntity->parent->id
+                        );
+        }
+
+        if ($parsedUri->currentEntity->id === null) {
+            $data = $query->get();
         } else {
-            $data = $repository->find($parsedUri->entity(0)->id);
+            $data = $query->find($parsedUri->currentEntity->id);
             if ($data === null) {
                 throw new NotFoundEntityRepositoryException('entity not exists');
             }
@@ -53,14 +66,21 @@ class Server
 
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
-        return $this->psr17Factory->createResponse(200)->withBody($bodyResponse)->withHeader('Content-type', 'application/json');
+        return $this->psr17Factory
+                        ->createResponse(200)
+                        ->withBody($bodyResponse)
+                        ->withHeader('Content-type', 'application/json');
     }
 
     private function post(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $data = $repository->save(json_decode($body, true));
+        $data = json_decode($body, true);
+
+        $data = $this->includeParent($data, $parsedUri);
+
+        $data = $repository->save(data: $data);
 
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
@@ -72,12 +92,24 @@ class Server
 
     private function put(ParsedUri $parsedUri, string $body): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->entity(0)->name);
+        if ($parsedUri->currentEntity->id === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
+        $repository = $this->database->from($parsedUri->currentEntity->name);
+
+        $entityData = json_decode($body, true);
+
+        if ($parsedUri->currentEntity->parent !== null) {
+            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+            if (! array_key_exists($column, $entityData)) {
+                $entityData = $this->includeParent($entityData, $parsedUri);
+            }
+        }
 
         try {
             $data = $repository->update(
-                $parsedUri->entity(0)->id,
-                json_decode($body, true)
+                $parsedUri->currentEntity->id,
+                $entityData
             );
             $statusCode = 200;
         } catch (NotFoundEntityException $e) {
@@ -93,6 +125,34 @@ class Server
             ->withHeader('Content-type', 'application/json');
     }
 
+    public function delete(ParsedUri $parsedUri, string $body): ResponseInterface
+    {
+        if ($parsedUri->currentEntity->id === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
+
+        $repository = $this->database->from($parsedUri->currentEntity->name);
+
+        if ($parsedUri->currentEntity->parent !== null) {
+            $parentData = $this->database
+                ->from($parsedUri->currentEntity->parent->name)
+                   ->find($parsedUri->currentEntity->parent->id);
+
+            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+            $parentIdFromEntity = $repository->find($parsedUri->currentEntity->id)[$column];
+
+            if ($parentData === null || $parentIdFromEntity !== $parsedUri->currentEntity->parent->id) {
+                throw new NotFoundEntityException('entity not found');
+            }
+        }
+
+        $repository->delete($parsedUri->currentEntity->id);
+
+        return $this->psr17Factory
+            ->createResponse(204)
+            ->withHeader('Content-type', 'application/json');
+    }
+
     public function send(ResponseInterface $response): void
     {
         http_response_code($response->getStatusCode());
@@ -101,5 +161,25 @@ class Server
             header("$key: {$value[0]}");
         }
         echo (string) $response->getBody();
+    }
+
+    private function includeParent(array $data, ParsedUri $parsedUri): array
+    {
+        if ($parsedUri->currentEntity->parent === null) {
+            return $data;
+        }
+
+        $parentData = $this->database
+                            ->from($parsedUri->currentEntity->parent->name)
+                                ->find($parsedUri->currentEntity->parent->id);
+
+        if ($parentData === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
+
+        $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+        $data[$column] = $parsedUri->currentEntity->parent->id;
+
+        return $data;
     }
 }

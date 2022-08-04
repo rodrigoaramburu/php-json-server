@@ -5,6 +5,20 @@ declare(strict_types=1);
 use JsonServer\Server;
 use Nyholm\Psr7\Factory\Psr17Factory;
 
+afterEach(function () {
+    $files = [
+        __DIR__.'/fixture/db-posts-save.json',
+        __DIR__.'/fixture/db-posts-update.json',
+        __DIR__.'/fixture/db-posts-delete.json',
+    ];
+
+    foreach ($files as $file) {
+        if (file_exists($file)) {
+            unlink($file);
+        }
+    }
+});
+
 test('should return data from a entity', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
@@ -175,4 +189,204 @@ test('should create an entity if entity not exists on a request put', function (
         'author' => 'Author put new',
         'content' => 'Content put new',
     ]);
+});
+
+test('should delete an entity', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1', '');
+
+    expect($response->getStatusCode())->toBe(204);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['posts'])->toHaveCount(1);
+
+    expect($data['posts'][0])->toMatchArray([
+        'id' => 2,
+        'title' => 'Duis quis arcu mi',
+        'author' => 'Rodrigo',
+        'content' => 'Suspendisse auctor dolor risus, vel posuere libero...',
+    ]);
+});
+
+test('should return error if id not exists on delete', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+
+    $response = $server->handle('DELETE', '/posts/42', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    expect((string) $response->getBody())->toBeJson();
+    expect((string) $response->getBody())
+        ->json()
+        ->statusCode->toBe(404)
+        ->message->toBe('Not Found');
+});
+
+test('should return entities with relationship', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+
+    $response = $server->handle('GET', '/posts/1/comments', '');
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $responseData = json_decode((string) $response->getBody(), true);
+
+    expect($responseData)->toHaveCount(2);
+
+    expect($responseData)->toMatchArray([
+        [
+            'id' => 1,
+            'post_id' => 1,
+            'comment' => 'Pellentesque id orci sodales, dignissim massa vel',
+        ],
+        [
+            'id' => 3,
+            'post_id' => 1,
+            'comment' => 'Quisque velit tellus, tempus vitae condimentum nec',
+        ],
+    ]);
+});
+
+test('should save an entity with a relationship', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-save.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-save.json');
+
+    $response = $server->handle('POST', '/posts/2/comments', json_encode([
+        'comment' => 'comment in a relationship',
+    ]));
+
+    expect($response->getStatusCode())->toBe(201);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-save.json'), true);
+
+    expect($data['comments'][3])->toMatchArray([
+        'id' => 4,
+        'post_id' => 2,
+        'comment' => 'comment in a relationship',
+    ]);
+});
+
+test('should update an entity with a relationship', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
+        'comment' => 'modified comment',
+    ]));
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-update.json'), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'modified comment',
+    ]);
+});
+
+test('should return 404 if parent entitity in relationship does not exist', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/5/comments/2', json_encode([
+        'comment' => 'modified comment',
+    ]));
+
+    expect($response->getStatusCode())->toBe(404);
+});
+
+test('should change the relationship if pass the field of parent', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
+        'comment' => 'modified comment',
+        'post_id' => 1,
+    ]));
+
+    expect($response->getStatusCode())->toBe(200);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-update.json'), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 1,
+        'comment' => 'modified comment',
+    ]);
+});
+
+test('should return 404 if id not found on put request', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+
+    $response = $server->handle('PUT', '/posts/2/comments', json_encode([
+        'comment' => 'modified comment',
+        'post_id' => 1,
+    ]));
+
+    expect($response->getStatusCode())->toBe(404);
+});
+
+test('should return 404 if parent entity id not exist', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/5/comments/2', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'Maecenas elit dui, venenatis ut erat vitae',
+    ]);
+});
+
+test('should return 404 if entity id not belongs to parent', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1/comments/2', '');
+
+    expect($response->getStatusCode())->toBe(404);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['comments'][1])->toMatchArray([
+        'id' => 2,
+        'post_id' => 2,
+        'comment' => 'Maecenas elit dui, venenatis ut erat vitae',
+    ]);
+});
+
+test('should return 404 if not send a id on delete request', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1/comments', '');
+
+    expect($response->getStatusCode())->toBe(404);
 });

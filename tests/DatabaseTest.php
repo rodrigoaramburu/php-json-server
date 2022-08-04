@@ -3,7 +3,22 @@
 declare(strict_types=1);
 
 use JsonServer\Database;
+use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+
+afterEach(function () {
+    $files = [
+        __DIR__.'/fixture/db-posts-save.json',
+        __DIR__.'/fixture/db-posts-update.json',
+        __DIR__.'/fixture/db-posts-delete.json',
+    ];
+
+    foreach ($files as $file) {
+        if (file_exists($file)) {
+            unlink($file);
+        }
+    }
+});
 
 test('should return data from entity', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
@@ -68,7 +83,6 @@ test('should save an entity and add a sequencial id', function () {
     ]);
 
     $data = json_decode(file_get_contents($dbJsonDir), true);
-    unlink(__DIR__.'/fixture/db-posts-save.json');
 
     expect($data['posts'][0])->toMatchArray([
         'id' => 1,
@@ -118,6 +132,46 @@ test('should update an entity', function () {
         'author' => 'Author Test changed',
         'content' => 'Content Test changed',
     ]);
+});
 
-    unlink($dbFileJson);
+test('should delete an entity', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $database = new Database($dbFileJson);
+
+    $database->from('posts')->delete(2);
+
+    $data = json_decode(file_get_contents($dbFileJson), true);
+
+    expect($data['posts'])->toHaveCount(1);
+
+    expect($data['posts'][0])->toMatchArray([
+        'id' => 1,
+    ]);
+});
+
+test('should throw an exception if id not exists', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $database = new Database($dbFileJson);
+
+    $database->from('posts')->delete(3);
+})->throws(NotFoundEntityException::class);
+
+test('should filter an entity by its parents', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts.json';
+
+    $database = new Database($dbFileJson);
+
+    $comments = $database
+                    ->from('comments')
+                    ->query()
+                        ->whereParent('posts', 1
+                        )->get();
+
+    expect($comments)->toHaveCount(2);
 });

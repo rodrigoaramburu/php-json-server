@@ -35,7 +35,7 @@ class Repository
         return $data;
     }
 
-    public function save(array $data): array
+    public function save(array $data, $parentEntityName = null, int $parentId = 0): array
     {
         $data = ['id' => $this->nextId()] + $data;
 
@@ -59,6 +59,24 @@ class Repository
         $this->database->save($this->entityName, $this->entityData);
 
         return $data;
+    }
+
+    public function delete(int $id): void
+    {
+        $pos = array_search($id, array_column($this->entityData, 'id'), true);
+
+        if ($pos === false) {
+            throw new NotFoundEntityException();
+        }
+
+        unset($this->entityData[$pos]);
+        $this->entityData = array_values($this->entityData);
+        $this->database->save($this->entityName, $this->entityData);
+    }
+
+    public function query(): Query
+    {
+        return new Query($this->entityData);
     }
 
     private function nextId(): int
