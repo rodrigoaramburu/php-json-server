@@ -175,3 +175,25 @@ test('should filter an entity by its parents', function () {
 
     expect($comments)->toHaveCount(2);
 });
+
+test('should save entity with a relationship', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-save.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $database = new Database($dbFileJson);
+
+    $database->from('comments')->save([
+        'comment' => 'comment in relationship',
+    ], 'posts', 2);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-save.json'), true);
+
+    expect($data['comments'])->toHaveCount(4);
+
+    expect($data['comments'][3])->toMatchArray([
+        'id' => 4,
+        'post_id' => 2,
+        'comment' => 'comment in relationship',
+    ]);
+});

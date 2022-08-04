@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use Doctrine\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use JsonServer\Exceptions\NotFoundEntityException;
 
 class Repository
 {
+    private Inflector $inflector;
+
     public function __construct(
         private string $entityName,
         private array $entityData,
         private Database $database
     ) {
+        $this->inflector = InflectorFactory::create()->build();
     }
 
     public function get(): array
@@ -35,9 +40,14 @@ class Repository
         return $data;
     }
 
-    public function save(array $data): array
+    public function save(array $data, $parentEntityName = null, int $parentId = 0): array
     {
         $data = ['id' => $this->nextId()] + $data;
+
+        if ($parentEntityName !== null) {
+            $column = $this->inflector->singularize($parentEntityName).'_id';
+            $data[$column] = $parentId;
+        }
 
         array_push($this->entityData, $data);
 

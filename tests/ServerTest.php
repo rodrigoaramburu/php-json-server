@@ -252,3 +252,23 @@ test('should return entities with relationship', function () {
         ],
     ]);
 });
+
+test('should save an entity with a relationship', function () {
+    file_put_contents(__DIR__.'/fixture/db-posts-save.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-save.json');
+
+    $response = $server->handle('POST', '/posts/2/comments', json_encode([
+        'comment' => 'comment in a relationship',
+    ]));
+
+    expect($response->getStatusCode())->toBe(201);
+
+    $data = json_decode(file_get_contents(__DIR__.'/fixture/db-posts-save.json'), true);
+
+    expect($data['comments'][3])->toMatchArray([
+        'id' => 4,
+        'post_id' => 2,
+        'comment' => 'comment in a relationship',
+    ]);
+});

@@ -71,7 +71,11 @@ class Server
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $data = $repository->save(json_decode($body, true));
+        $data = $repository->save(
+            data: json_decode($body, true),
+            parentEntityName: $parsedUri->currentEntity->parent?->name,
+            parentId: $parsedUri->currentEntity->parent?->id ?? 0,
+        );
 
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
