@@ -378,3 +378,15 @@ test('should return 404 if entity id not belongs to parent', function () {
         'comment' => 'Maecenas elit dui, venenatis ut erat vitae',
     ]);
 });
+
+test('should return 404 if not send a id on delete request', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+
+    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+
+    $server = new Server(dbFileJson: $dbFileJson);
+
+    $response = $server->handle('DELETE', '/posts/1/comments', '');
+
+    expect($response->getStatusCode())->toBe(404);
+});

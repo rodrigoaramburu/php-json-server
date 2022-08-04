@@ -127,6 +127,10 @@ class Server
 
     public function delete(ParsedUri $parsedUri, string $body): ResponseInterface
     {
+        if ($parsedUri->currentEntity->id === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
+
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
         if ($parsedUri->currentEntity->parent !== null) {
