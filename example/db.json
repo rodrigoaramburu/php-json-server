@@ -1,14 +1,14 @@
 {
-    "posts":[
-        {   
+    "posts": [
+        {
             "id": 1,
-            "title":"Lorem ipsum dolor sit amet",
+            "title": "Lorem ipsum dolor sit amet",
             "author": "Rodrigo",
             "content": "Nunc volutpat ipsum eget sapien ornare..."
         },
         {
             "id": 2,
-            "title":"Duis quis arcu mi",
+            "title": "Duis quis arcu mi",
             "author": "Rodrigo",
             "content": "Suspendisse auctor dolor risus, vel posuere libero..."
         }
@@ -28,7 +28,11 @@
             "id": 3,
             "post_id": 1,
             "comment": "Quisque velit tellus, tempus vitae condimentum nec"
+        },
+        {
+            "id": 4,
+            "comment": "um coment\u00e1rio teste",
+            "post_id": 2
         }
     ]
-
 }

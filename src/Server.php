@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use Doctrine\Inflector\Inflector;
+use Doctrine\Inflector\InflectorFactory;
 use Exception;
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
@@ -13,10 +15,13 @@ use Psr\Http\Message\ResponseInterface;
 
 class Server
 {
+    private Inflector $inflector;
+
     public function __construct(string $dbFileJson = 'db.json')
     {
         $this->database = new Database(dbFileJson: $dbFileJson);
         $this->psr17Factory = new Psr17Factory();
+        $this->inflector = InflectorFactory::create()->build();
     }
 
     public function handle(string $method, string $uri, string $body): ResponseInterface
@@ -71,11 +76,11 @@ class Server
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 
-        $data = $repository->save(
-            data: json_decode($body, true),
-            parentEntityName: $parsedUri->currentEntity->parent?->name,
-            parentId: $parsedUri->currentEntity->parent?->id ?? 0,
-        );
+        $data = json_decode($body, true);
+
+        $data = $this->includeParent($data, $parsedUri);
+
+        $data = $repository->save(data: $data);
 
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
@@ -127,5 +132,25 @@ class Server
             header("$key: {$value[0]}");
         }
         echo (string) $response->getBody();
+    }
+
+    private function includeParent(array $data, ParsedUri $parsedUri): array
+    {
+        if ($parsedUri->currentEntity->parent === null) {
+            return $data;
+        }
+
+        $parentData = $this->database
+                            ->from($parsedUri->currentEntity->parent->name)
+                                ->find($parsedUri->currentEntity->parent->id);
+
+        if ($parentData === null) {
+            throw new NotFoundEntityException('entity not found');
+        }
+
+        $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
+        $data[$column] = $parsedUri->currentEntity->parent->id;
+
+        return $data;
     }
 }
