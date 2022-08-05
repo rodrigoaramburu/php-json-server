@@ -1,0 +1,12 @@
+{
+    "/tests/static": {
+        "POST": {
+            "body": "a body response",
+            "statusCode": 201,
+            "headers": {
+                "my-header": "1234",
+                "header-two": "4321"
+            }
+        }
+    }
+}
