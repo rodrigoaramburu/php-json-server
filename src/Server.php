@@ -10,6 +10,7 @@ use Exception;
 use JsonServer\Exceptions\EmptyBodyException;
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+use JsonServer\Middlewares\Middleware;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\RequestInterface;
@@ -18,6 +19,8 @@ use Psr\Http\Message\ResponseInterface;
 class Server
 {
     private Inflector $inflector;
+
+    private ?Middleware $middleware = null;
 
     public function __construct(string $dbFileJson = 'db.json')
     {
@@ -35,6 +38,12 @@ class Server
         $response = $this->psr17Factory
                                 ->createResponse(200)
                                 ->withHeader('Content-type', 'application/json');
+
+        if ($this->middleware !== null) {
+            return $this->middleware->handle($request, function ($request) use ($response) {
+                return $this->proccess($request, $response);
+            });
+        }
 
         return $this->proccess($request, $response);
     }
@@ -219,5 +228,19 @@ class Server
         }
 
         return $result;
+    }
+
+    public function addMidleware(Middleware $middleware): self
+    {
+        if ($this->middleware === null) {
+            $this->middleware = $middleware;
+
+            return $this;
+        }
+
+        $middleware->setNext($this->middleware);
+        $this->middleware = $middleware;
+
+        return $this;
     }
 }

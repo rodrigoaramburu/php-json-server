@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use JsonServer\Middlewares\Handler;
+use JsonServer\Middlewares\Middleware;
 use JsonServer\Server;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 afterEach(function () {
     $files = [
@@ -435,4 +439,33 @@ test('should return 400 if post request with body format wrong', function () {
         'statusCode' => 400,
         'message' => 'Empty Body',
     ]);
+});
+
+test('should call midlleware', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+
+    $middleware1 = new class extends Middleware
+    {
+        public function process(RequestInterface $request, Handler $handler): ResponseInterface
+        {
+            return $handler->handle($request)->withHeader('Md1', 'teste 1');
+        }
+    };
+
+    $middleware2 = new class extends Middleware
+    {
+        public function process(RequestInterface $request, Handler $handler): ResponseInterface
+        {
+            return $handler->handle($request)->withHeader('Md2', 'teste 2');
+        }
+    };
+
+    $server
+        ->addMidleware($middleware1)
+        ->addMidleware($middleware2);
+
+    $response = $server->handle('GET', '/posts', null);
+
+    expect($response->getHeader('Md1')[0])->toBe('teste 1');
+    expect($response->getHeader('Md2')[0])->toBe('teste 2');
 });
