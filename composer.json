@@ -15,7 +15,8 @@
     ],
     "require-dev": {
         "laravel/pint": "^1.1",
-        "pestphp/pest": "^1.21"
+        "pestphp/pest": "^1.21",
+        "mockery/mockery": "^1.5"
     },
     "require": {
         "nyholm/psr7": "^1.5",

@@ -29,11 +29,15 @@ class Server
         $this->inflector = InflectorFactory::create()->build();
     }
 
-    public function handle(string $method, string $uri, ?string $body): ResponseInterface
+    public function handle(string $method, string $uri, ?string $body = null, ?array $headers = []): ResponseInterface
     {
         $request = $this->psr17Factory
                             ->createRequest($method, $uri)
                             ->withBody($this->psr17Factory->createStream($body ?? ''));
+
+        foreach ($headers as $key => $value) {
+            $request = $request->withHeader($key, $value);
+        }
 
         $response = $this->psr17Factory
                                 ->createResponse(200)
@@ -41,14 +45,14 @@ class Server
 
         if ($this->middleware !== null) {
             return $this->middleware->handle($request, function ($request) use ($response) {
-                return $this->proccess($request, $response);
+                return $this->process($request, $response);
             });
         }
 
-        return $this->proccess($request, $response);
+        return $this->process($request, $response);
     }
 
-    public function proccess(RequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function process(RequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $parsedUri = ParsedUri::parseUri($request->getUri()->getPath());
 

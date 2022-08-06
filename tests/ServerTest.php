@@ -469,3 +469,13 @@ test('should call midlleware', function () {
     expect($response->getHeader('Md1')[0])->toBe('teste 1');
     expect($response->getHeader('Md2')[0])->toBe('teste 2');
 });
+
+test('should include header in request', function () {
+    $server = Mockery::mock('JsonServer\Server[process]', [__DIR__.'/fixture/db-posts.json'])->makePartial();
+
+    $server->shouldReceive('process')->withArgs(function ($request, $response) {
+        expect($request->getHeader('x-my-header')[0])->toBe('example-value');
+    });
+
+    $response = $server->handle('GET', '/posts', null, ['x-my-header' => 'example-value']);
+});
