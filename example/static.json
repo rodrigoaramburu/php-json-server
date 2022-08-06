@@ -1,0 +1,20 @@
+{
+    "/routes/static": {
+        "GET": {
+            "body": "{\"message\": \"uma mensagem de teste\"}",
+            "statusCode": 201,
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        }
+    },
+    "/routes/two": {
+        "GET": {
+            "body": "{\"message\": \"outra mensagem\",\"code\":200}",
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            }
+        }
+    }
+}
