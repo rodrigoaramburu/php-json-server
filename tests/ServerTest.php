@@ -461,8 +461,8 @@ test('should call midlleware', function () {
     };
 
     $server
-        ->addMidleware($middleware1)
-        ->addMidleware($middleware2);
+        ->addMiddleware($middleware1)
+        ->addMiddleware($middleware2);
 
     $response = $server->handle('GET', '/posts', null);
 

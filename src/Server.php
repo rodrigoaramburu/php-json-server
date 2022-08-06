@@ -230,7 +230,7 @@ class Server
         return $result;
     }
 
-    public function addMidleware(Middleware $middleware): self
+    public function addMiddleware(Middleware $middleware): self
     {
         if ($this->middleware === null) {
             $this->middleware = $middleware;
