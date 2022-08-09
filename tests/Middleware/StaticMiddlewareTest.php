@@ -54,3 +54,33 @@ test('shuold throw exception route file not valid', function () {
 test('shuold throw exception route file not exist', function () {
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-missing.json');
 })->throws(Exception::class, 'cannot open file '.__DIR__.'/../fixture/static-missing.json');
+
+test('should get response body from file if specified', function () {
+    $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-body-file.json');
+
+    $psr17Factory = new Psr17Factory();
+    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/static-body-file');
+
+    $response = $middleware->handle($request, function () use ($psr17Factory) {
+        return $psr17Factory->createResponse(200);
+    });
+
+    expect($response->getStatusCode())->toBe(201);
+    expect((string) $response->getBody())->toBe('a body response from file');
+});
+
+test('should throw exception response body from file if specified but not exists', function () {
+    $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-body-file-missing.json');
+
+    $psr17Factory = new Psr17Factory();
+    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/static-body-file-missing');
+
+    try {
+        $response = $middleware->handle($request, function () use ($psr17Factory) {
+            return $psr17Factory->createResponse(200);
+        });
+        $this->assertTrue(false, 'exception expected');
+    } catch (Exception $e) {
+        expect($e->getMessage())->toStartWith('file not found');
+    }
+});

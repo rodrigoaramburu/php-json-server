@@ -13,6 +13,8 @@ class StaticMiddleware extends Middleware
 {
     private array $routes = [];
 
+    private string $pathBody;
+
     public function __construct(string|array $routes = 'static.json')
     {
         if (is_string($routes)) {
@@ -24,6 +26,7 @@ class StaticMiddleware extends Middleware
                 throw new Exception('cannot read file '.$routes);
             }
             $this->routes = $r;
+            $this->pathBody = dirname($routes);
         }
         if (is_array($routes)) {
             $this->routes = $routes;
@@ -60,6 +63,17 @@ class StaticMiddleware extends Middleware
 
         $response = $psr17Factory->createResponse($route['statusCode'] ?? 200)
                         ->withBody($psr17Factory->createStream($route['body'] ?? ''));
+
+        if (array_key_exists('body-file', $route)) {
+            $file = $this->pathBody.'/'.$route['body-file'];
+            if (! file_exists($this->pathBody.'/'.$route['body-file'])) {
+                throw new Exception('file not found: '.$this->pathBody.'/'.$route['body-file']);
+            }
+
+            $response = $response->withBody(
+                $psr17Factory->createStream(file_get_contents($this->pathBody.'/'.$route['body-file']) ?? '')
+            );
+        }
 
         foreach ($route['headers'] ?? [] as $header => $value) {
             $response = $response->withHeader($header, $value);

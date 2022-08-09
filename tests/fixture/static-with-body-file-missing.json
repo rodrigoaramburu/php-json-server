@@ -1,0 +1,12 @@
+{
+    "/static-body-file-missing": {
+        "POST": {
+            "body-file": "response-body-file-missing.txt",
+            "statusCode": 201,
+            "headers": {
+                "my-header": "1234",
+                "header-two": "4321"
+            }
+        }
+    }
+}
