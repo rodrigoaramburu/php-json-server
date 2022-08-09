@@ -3,7 +3,7 @@
 use JsonServer\Middlewares\StaticMiddleware;
 use JsonServer\Server;
 
-require __DIR__.'/../vendor/autoload.php';
+include 'vendor/autoload.php';
 
 $server = new Server(__DIR__.'/db.json');
 
