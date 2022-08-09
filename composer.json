@@ -19,12 +19,15 @@
         "mockery/mockery": "^1.5"
     },
     "require": {
+        "php": ">8.0",
         "nyholm/psr7": "^1.5",
-        "doctrine/inflector": "^2.0"
+        "doctrine/inflector": "^2.0",
+        "minicli/minicli": "^3.2"
     },
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true
         }
-    }
+    },
+    "bin":["bin/json-server"]
 }
