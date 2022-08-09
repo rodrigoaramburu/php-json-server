@@ -2,19 +2,23 @@
 <?php
 
 use Minicli\App;
-use Minicli\Command\CommandCall;
 
 if (php_sapi_name() !== 'cli') {
     exit;
 }
 
-$root_app = dirname(__DIR__);
+$vendorPath = dirname(__DIR__, 4) . '/vendor/autoload.php';
+$localPath = dirname(__DIR__) . '/vendor/autoload.php';
 
-if (!is_file($root_app . '/vendor/autoload.php')) {
-    $root_app = dirname(__DIR__, 4);
+if (file_exists($vendorPath)) {
+    include_once $vendorPath;
+    $autoloadPath = $vendorPath;
+    $root_app = dirname($autoloadPath, 2);
+} else {
+    include_once $localPath;
+    $autoloadPath = $localPath;
+    $root_app = dirname($autoloadPath, 2);
 }
-
-include_once $root_app . '/vendor/autoload.php';
 
 $app = new App([
     'app_path' => $root_app . '/src/Command'
