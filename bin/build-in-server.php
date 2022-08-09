@@ -10,7 +10,6 @@ if (! is_file($root_app.'/vendor/autoload.php')) {
 }
 
 require $root_app.'/vendor/autoload.php';
-var_dump($_ENV);
 $dataDir = $_ENV['DATA_DIR'] ?? '.';
 
 $server = new Server($dataDir.'/db.json');
