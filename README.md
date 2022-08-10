@@ -6,13 +6,13 @@ Ela pode rodar através do servidor _build-in_ do PHP ou ser integrada a um _fra
 
 __* NÃO DEVE SER UTILIZADO EM PRODUÇÃO__
 
-Inpirado na biblioteca [Zlob/php-json-server](https://github.com/Zlob/php-json-server)
+Inpirada na biblioteca [Zlob/php-json-server](https://github.com/Zlob/php-json-server)
 
 ## Instalação
 
 Via composer `composer require rodrigoaramburu/php-json-server`.
 
-Criamos um arquivo para `index.php` com o seguinte código.
+Criamos um arquivo `index.php` com o seguinte código.
 
 ```php
 $server = new Server(__DIR__.'/db.json');
