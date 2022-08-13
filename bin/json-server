@@ -13,8 +13,8 @@ $localPath = dirname(__DIR__) . '/vendor/autoload.php';
 if (file_exists($vendorPath)) {
     include_once $vendorPath;
     $autoloadPath = $vendorPath;
-    $root_app = dirname($autoloadPath, 2);
-    $command_path = $root_app . '/vendor/rodrigoaramburu/php-json-server/src/Command';
+    $root_app = dirname($autoloadPath, 2) . '/vendor/rodrigoaramburu/php-json-server/';
+    $command_path = dirname($autoloadPath, 2) . '/vendor/rodrigoaramburu/php-json-server/src/Command';
 } else {
     include_once $localPath;
     $autoloadPath = $localPath;
