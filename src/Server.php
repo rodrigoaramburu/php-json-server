@@ -6,10 +6,8 @@ namespace JsonServer;
 
 use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
-use Exception;
-use JsonServer\Exceptions\EmptyBodyException;
-use JsonServer\Exceptions\NotFoundEntityException;
-use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+use JsonServer\Exceptions\HttpException;
+use JsonServer\Exceptions\MethodNotAllowedException;
 use JsonServer\Method\Delete;
 use JsonServer\Method\Get;
 use JsonServer\Method\Post;
@@ -66,29 +64,23 @@ class Server
                 'POST' => new Post($this->database, $this->psr17Factory),
                 'PUT' => new Put($this->database, $this->psr17Factory),
                 'DELETE' => new Delete($this->database, $this->psr17Factory),
+                default => null
             };
 
+            if ($httpMethod == null) {
+                throw new MethodNotAllowedException();
+            }
+
             return $httpMethod->execute($request, $response, $parsedUri);
-        } catch (NotFoundEntityException|NotFoundEntityRepositoryException  $e) {
+        } catch (HttpException $e) {
             $bodyResponse = $this->psr17Factory->createStream(json_encode([
-                'statusCode' => 404,
-                'message' => 'Not Found',
+                'statusCode' => $e->getCode(),
+                'message' => $e->getMessage(),
             ]));
 
             return $response
-                ->withStatus(404)
+                ->withStatus($e->getCode())
                 ->withBody($bodyResponse);
-        } catch (EmptyBodyException $e) {
-            $bodyResponse = $this->psr17Factory->createStream(json_encode([
-                'statusCode' => 400,
-                'message' => 'Empty Body',
-            ]));
-
-            return $response
-                ->withStatus(400)
-                ->withBody($bodyResponse);
-        } catch (\UnhandledMatchError $e) {
-            throw new Exception('http method não encontrado');
         }
     }
 

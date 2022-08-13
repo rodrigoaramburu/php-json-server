@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace JsonServer\Exceptions;
 
-use Exception;
-
-class NotFoundEntityRepositoryException extends Exception
+class NotFoundEntityRepositoryException extends HttpException
 {
+    public function __construct()
+    {
+        parent::__construct('Not Found', 404);
+    }
 }
