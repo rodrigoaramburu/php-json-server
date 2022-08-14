@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
-use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use JsonServer\Exceptions\HttpException;
 use JsonServer\Exceptions\MethodNotAllowedException;
@@ -15,13 +14,11 @@ use JsonServer\Method\Put;
 use JsonServer\Middlewares\Middleware;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Server
 {
-    private Inflector $inflector;
-
     private ?Middleware $middleware = null;
 
     public function __construct(string $dbFileJson = 'db.json')
@@ -33,8 +30,12 @@ class Server
 
     public function handle(string $method, string $uri, ?string $body = null, ?array $headers = []): ResponseInterface
     {
+        $query = parse_url($uri);
+        parse_str($query['query'] ?? '', $query);
+
         $request = $this->psr17Factory
-                            ->createRequest($method, $uri)
+                            ->createServerRequest($method, $uri)
+                            ->withQueryParams($query)
                             ->withBody($this->psr17Factory->createStream($body ?? ''));
 
         foreach ($headers as $key => $value) {
@@ -54,7 +55,7 @@ class Server
         return $this->process($request, $response);
     }
 
-    public function process(RequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function process(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $parsedUri = ParsedUri::parseUri($request->getUri()->getPath());
 

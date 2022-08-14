@@ -6,8 +6,8 @@ namespace JsonServer\Middlewares;
 
 use Exception;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class BasicAuthMiddleware extends Middleware
 {
@@ -32,7 +32,7 @@ class BasicAuthMiddleware extends Middleware
         }
     }
 
-    public function process(RequestInterface $request, Handler $handler): ResponseInterface
+    public function process(ServerRequestInterface $request, Handler $handler): ResponseInterface
     {
         if ($this->checkIgnore($request->getUri()->getPath())) {
             return $handler->handle($request);

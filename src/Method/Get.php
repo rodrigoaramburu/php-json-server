@@ -6,12 +6,12 @@ namespace JsonServer\Method;
 
 use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 use JsonServer\Utils\ParsedUri;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Get extends HttpMethod
 {
-    public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
+    public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
         $query = $this->database->from($parsedUri->currentEntity->name)->query();
 
@@ -21,6 +21,11 @@ class Get extends HttpMethod
                             entityName: $parsedUri->currentEntity->parent->name,
                             id: $parsedUri->currentEntity->parent->id
                         );
+        }
+
+        $params = $request->getQueryParams();
+        foreach ($params as $key => $param) {
+            $query = $query->where($key, $param);
         }
 
         if ($parsedUri->currentEntity->id === null) {

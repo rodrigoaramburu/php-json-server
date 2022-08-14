@@ -175,3 +175,31 @@ test('should filter an entity by its parents', function () {
 
     expect($comments)->toHaveCount(2);
 });
+
+test('should filter a resource by field', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->where('title', 'Duis')->get();
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should filter a resource by field case insensitive', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->where('title', 'duis')->get();
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});

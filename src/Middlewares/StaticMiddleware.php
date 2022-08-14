@@ -6,8 +6,8 @@ namespace JsonServer\Middlewares;
 
 use Exception;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class StaticMiddleware extends Middleware
 {
@@ -33,7 +33,7 @@ class StaticMiddleware extends Middleware
         }
     }
 
-    public function process(RequestInterface $request, Handler $handler): ResponseInterface
+    public function process(ServerRequestInterface $request, Handler $handler): ResponseInterface
     {
         $route = $this->getRoute($request);
         if ($route !== null) {
@@ -43,7 +43,7 @@ class StaticMiddleware extends Middleware
         return $handler->handle($request);
     }
 
-    private function getRoute(RequestInterface $request): ?array
+    private function getRoute(ServerRequestInterface $request): ?array
     {
         if (! array_key_exists($request->getUri()->getPath(), $this->routes)) {
             return null;

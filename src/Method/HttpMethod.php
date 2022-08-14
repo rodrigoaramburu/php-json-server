@@ -11,8 +11,8 @@ use JsonServer\Exceptions\EmptyBodyException;
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 abstract class HttpMethod
 {
@@ -25,7 +25,7 @@ abstract class HttpMethod
         $this->inflector = InflectorFactory::create()->build();
     }
 
-    abstract public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface;
+    abstract public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface;
 
     protected function bodyDecode(?string $body): array
     {

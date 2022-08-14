@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace JsonServer\Method;
 
 use JsonServer\Utils\ParsedUri;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Post extends HttpMethod
 {
-    public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
+    public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
         $repository = $this->database->from($parsedUri->currentEntity->name);
 

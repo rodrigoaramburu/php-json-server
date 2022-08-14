@@ -8,6 +8,7 @@ use JsonServer\Server;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 afterEach(function () {
     $files = [
@@ -471,11 +472,30 @@ test('should call midlleware', function () {
 });
 
 test('should include header in request', function () {
-    $server = Mockery::mock('JsonServer\Server[process]', [__DIR__.'/fixture/db-posts.json'])->makePartial();
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
-    $server->shouldReceive('process')->withArgs(function ($request, $response) {
-        expect($request->getHeader('x-my-header')[0])->toBe('example-value');
-    });
-
+    $middlewareCheckHeader = new class extends Middleware{
+        public function process(ServerRequestInterface $request, Handler $handler): ResponseInterface
+        {
+            expect($request->getHeader('x-my-header')[0])->toBe('example-value');
+            return $handler->handle($request);
+        }
+    };
+    $server->addMiddleware($middlewareCheckHeader);
     $response = $server->handle('GET', '/posts', null, ['x-my-header' => 'example-value']);
+});
+
+
+test('should filter resources by query params', function(){
+
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $response = $server->handle('GET', '/posts?title=duis');
+
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
 });

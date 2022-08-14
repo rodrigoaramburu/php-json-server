@@ -6,12 +6,12 @@ namespace JsonServer\Method;
 
 use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Utils\ParsedUri;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Delete extends HttpMethod
 {
-    public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
+    public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
         if ($parsedUri->currentEntity->id === null) {
             throw new NotFoundEntityException('entity not found');

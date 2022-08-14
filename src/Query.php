@@ -38,11 +38,23 @@ class Query
         $inflector = InflectorFactory::create()->build();
         $column = $inflector->singularize($entityName).'_id';
 
-        $data = array_filter($this->data, function ($entity) use ($column, $id) {
-            return $entity[$column] === $id;
+        $data = array_filter($this->data, function ($resource) use ($column, $id) {
+            return $resource[$column] === $id;
         });
         $data = array_values($data);
 
         return new Query($data);
+    }
+
+    public function where(string $field, string $value): Query
+    {
+        $data = array_filter($this->data, function ($resource) use ($field, $value) {
+            return str_contains(
+                strtolower($resource[$field]),
+                strtolower($value)
+            );
+        });
+
+        return new Query(array_values($data));
     }
 }
