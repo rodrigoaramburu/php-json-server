@@ -33,10 +33,10 @@ class Query
         return $data;
     }
 
-    public function whereParent(string $entityName, int $id): Query
+    public function whereParent(string $resourceName, int $id): Query
     {
         $inflector = InflectorFactory::create()->build();
-        $column = $inflector->singularize($entityName).'_id';
+        $column = $inflector->singularize($resourceName).'_id';
 
         $data = array_filter($this->data, function ($resource) use ($column, $id) {
             return $resource[$column] === $id;

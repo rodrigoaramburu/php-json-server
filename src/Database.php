@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace JsonServer;
 
 use InvalidArgumentException;
-use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
 class Database
 {
     private $fileDb;
 
-    private array $entities = [];
+    private array $resources = [];
 
     public function __construct(string $dbFileJson = 'db.json')
     {
@@ -23,11 +23,11 @@ class Database
         flock($this->fileDb, LOCK_EX);
         $jsonString = filesize($dbFileJson) > 0 ? fread($this->fileDb, filesize($dbFileJson)) : null;
         if ($jsonString !== null) {
-            $entities = json_decode($jsonString, true);
+            $resources = json_decode($jsonString, true);
 
-            if (is_array($entities)) {
-                foreach ($entities as $key => $entity) {
-                    $this->entities[$key] = $entity;
+            if (is_array($resources)) {
+                foreach ($resources as $key => $resource) {
+                    $this->resources[$key] = $resource;
                 }
             }
         } else {
@@ -40,20 +40,20 @@ class Database
         flock($this->fileDb, LOCK_UN);
     }
 
-    public function from(string $entityName): Repository
+    public function from(string $resourceName): Repository
     {
-        if (! array_key_exists($entityName, $this->entities)) {
-            throw new NotFoundEntityRepositoryException("entity $entityName not found");
+        if (! array_key_exists($resourceName, $this->resources)) {
+            throw new NotFoundResourceRepositoryException("resource $resourceName not found");
         }
 
-        return new Repository($entityName, $this->entities[$entityName], $this);
+        return new Repository($resourceName, $this->resources[$resourceName], $this);
     }
 
-    public function save(string $entityName, array $data): void
+    public function save(string $resourceName, array $data): void
     {
-        $this->entities[$entityName] = $data;
+        $this->resources[$resourceName] = $data;
         ftruncate($this->fileDb, 0);
         rewind($this->fileDb);
-        fwrite($this->fileDb, json_encode($this->entities, JSON_PRETTY_PRINT));
+        fwrite($this->fileDb, json_encode($this->resources, JSON_PRETTY_PRINT));
     }
 }

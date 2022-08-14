@@ -4,36 +4,36 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
-use JsonServer\Exceptions\NotFoundEntityException;
 use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use JsonServer\Exceptions\NotFoundResourceException;
 
 class Put extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        if ($parsedUri->currentEntity->id === null) {
-            throw new NotFoundEntityException('entity not found');
+        if ($parsedUri->currentResource->id === null) {
+            throw new NotFoundResourceException();
         }
-        $repository = $this->database->from($parsedUri->currentEntity->name);
+        $repository = $this->database->from($parsedUri->currentResource->name);
 
-        $entityData = $this->bodyDecode((string) $request->getBody());
+        $resourceData = $this->bodyDecode((string) $request->getBody());
 
-        if ($parsedUri->currentEntity->parent !== null) {
-            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-            if (! array_key_exists($column, $entityData)) {
-                $entityData = $this->includeParent($entityData, $parsedUri);
+        if ($parsedUri->currentResource->parent !== null) {
+            $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+            if (! array_key_exists($column, $resourceData)) {
+                $resourceData = $this->includeParent($resourceData, $parsedUri);
             }
         }
 
         try {
             $data = $repository->update(
-                $parsedUri->currentEntity->id,
-                $entityData
+                $parsedUri->currentResource->id,
+                $resourceData
             );
             $statusCode = 200;
-        } catch (NotFoundEntityException $e) {
+        } catch (NotFoundResourceException $e) {
             $statusCode = 201;
             $data = $repository->save(json_decode((string) $request->getBody(), true));
         }

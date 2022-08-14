@@ -24,7 +24,7 @@ afterEach(function () {
     }
 });
 
-test('should return data from a entity', function () {
+test('should return data from a resource', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
     $response = $server->handle('GET', '/posts', '');
@@ -38,7 +38,7 @@ test('should return data from a entity', function () {
     expect($responseData)->toMatchArray($expectData['posts']);
 });
 
-test('should return data from a entity with a id', function () {
+test('should return data from a resource with a id', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
     $response = $server->handle('GET', '/posts/2', '');
@@ -55,15 +55,15 @@ test('should return data from a entity with a id', function () {
     ]);
 });
 
-test('should return error 404 if entity not found', function () {
+test('should return error 404 if resource not found', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
-    $response = $server->handle('GET', '/entityNotFound', '');
+    $response = $server->handle('GET', '/resourceNotFound', '');
 
     expect($response->getStatusCode())->toBe(404);
 });
 
-test('should return error 404 if entity does not exists', function () {
+test('should return error 404 if resource does not exists', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
     $response = $server->handle('GET', '/posts/42', '');
@@ -162,7 +162,7 @@ test('should update data from a put request', function () {
     ]);
 });
 
-test('should create an entity if entity not exists on a request put', function () {
+test('should create an resource if resource not exists on a request put', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -196,7 +196,7 @@ test('should create an entity if entity not exists on a request put', function (
     ]);
 });
 
-test('should delete an entity', function () {
+test('should delete an resource', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -258,7 +258,7 @@ test('should return entities with relationship', function () {
     ]);
 });
 
-test('should save an entity with a relationship', function () {
+test('should save an resource with a relationship', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-save.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-save.json');
@@ -278,7 +278,7 @@ test('should save an entity with a relationship', function () {
     ]);
 });
 
-test('should update an entity with a relationship', function () {
+test('should update an resource with a relationship', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
@@ -298,7 +298,7 @@ test('should update an entity with a relationship', function () {
     ]);
 });
 
-test('should return 404 if parent entitity in relationship does not exist', function () {
+test('should return 404 if parent resource in relationship does not exist', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
@@ -344,7 +344,7 @@ test('should return 404 if id not found on put request', function () {
     expect($response->getStatusCode())->toBe(404);
 });
 
-test('should return 404 if parent entity id not exist', function () {
+test('should return 404 if parent resource id not exist', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -364,7 +364,7 @@ test('should return 404 if parent entity id not exist', function () {
     ]);
 });
 
-test('should return 404 if entity id not belongs to parent', function () {
+test('should return 404 if resource id not belongs to parent', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));

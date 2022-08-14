@@ -12,7 +12,7 @@ class Post extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->currentEntity->name);
+        $repository = $this->database->from($parsedUri->currentResource->name);
 
         $data = $this->bodyDecode((string) $request->getBody());
 

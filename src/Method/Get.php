@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
-use JsonServer\Exceptions\NotFoundEntityRepositoryException;
 use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
 class Get extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        $query = $this->database->from($parsedUri->currentEntity->name)->query();
+        $query = $this->database->from($parsedUri->currentResource->name)->query();
 
-        if ($parsedUri->currentEntity->parent !== null) {
+        if ($parsedUri->currentResource->parent !== null) {
             $query = $query
                         ->whereParent(
-                            entityName: $parsedUri->currentEntity->parent->name,
-                            id: $parsedUri->currentEntity->parent->id
+                            resourceName: $parsedUri->currentResource->parent->name,
+                            id: $parsedUri->currentResource->parent->id
                         );
         }
 
@@ -28,12 +28,12 @@ class Get extends HttpMethod
             $query = $query->where($key, $param);
         }
 
-        if ($parsedUri->currentEntity->id === null) {
+        if ($parsedUri->currentResource->id === null) {
             $data = $query->get();
         } else {
-            $data = $query->find($parsedUri->currentEntity->id);
+            $data = $query->find($parsedUri->currentResource->id);
             if ($data === null) {
-                throw new NotFoundEntityRepositoryException('entity not exists');
+                throw new NotFoundResourceRepositoryException();
             }
         }
 

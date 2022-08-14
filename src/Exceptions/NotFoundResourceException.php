@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer\Exceptions;
 
-class NotFoundEntityException extends HttpException
+class NotFoundResourceException extends HttpException
 {
     public function __construct()
     {
