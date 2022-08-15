@@ -88,7 +88,7 @@ test('should call process in order', function () {
     $middleware2->setNext($middleware3);
 
     $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createRequest('POST', '/posts/1');
+    $request = $psr17Factory->createServerRequest('POST', '/posts/1');
 
     $response = $middleware1->handle($request, function ($request) use ($psr17Factory) {
         $header = $request->getHeader('requestHeaderExpected')[0];

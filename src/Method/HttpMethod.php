@@ -8,11 +8,11 @@ use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use JsonServer\Database;
 use JsonServer\Exceptions\EmptyBodyException;
-use JsonServer\Exceptions\NotFoundEntityException;
+use JsonServer\Exceptions\NotFoundResourceException;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 abstract class HttpMethod
 {
@@ -25,7 +25,7 @@ abstract class HttpMethod
         $this->inflector = InflectorFactory::create()->build();
     }
 
-    abstract public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface;
+    abstract public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface;
 
     protected function bodyDecode(?string $body): array
     {
@@ -43,20 +43,20 @@ abstract class HttpMethod
 
     protected function includeParent(array $data, ParsedUri $parsedUri): array
     {
-        if ($parsedUri->currentEntity->parent === null) {
+        if ($parsedUri->currentResource->parent === null) {
             return $data;
         }
 
         $parentData = $this->database
-                            ->from($parsedUri->currentEntity->parent->name)
-                                ->find($parsedUri->currentEntity->parent->id);
+                            ->from($parsedUri->currentResource->parent->name)
+                                ->find($parsedUri->currentResource->parent->id);
 
         if ($parentData === null) {
-            throw new NotFoundEntityException('entity not found');
+            throw new NotFoundResourceException();
         }
 
-        $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-        $data[$column] = $parsedUri->currentEntity->parent->id;
+        $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+        $data[$column] = $parsedUri->currentResource->parent->id;
 
         return $data;
     }

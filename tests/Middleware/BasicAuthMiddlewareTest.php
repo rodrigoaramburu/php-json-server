@@ -109,7 +109,7 @@ function createRequest($url, $headers = []): RequestInterface
 {
     $psr17Factory = new Psr17Factory();
 
-    $request = $psr17Factory->createRequest('GET', $psr17Factory->createUri($url));
+    $request = $psr17Factory->createServerRequest('GET', $psr17Factory->createUri($url));
 
     foreach ($headers as $key => $value) {
         $request = $request->withHeader($key, $value);

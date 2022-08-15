@@ -4,35 +4,35 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
-use JsonServer\Exceptions\NotFoundEntityException;
+use JsonServer\Exceptions\NotFoundResourceException;
 use JsonServer\Utils\ParsedUri;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Delete extends HttpMethod
 {
-    public function execute(RequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
+    public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        if ($parsedUri->currentEntity->id === null) {
-            throw new NotFoundEntityException('entity not found');
+        if ($parsedUri->currentResource->id === null) {
+            throw new NotFoundResourceException();
         }
 
-        $repository = $this->database->from($parsedUri->currentEntity->name);
+        $repository = $this->database->from($parsedUri->currentResource->name);
 
-        if ($parsedUri->currentEntity->parent !== null) {
+        if ($parsedUri->currentResource->parent !== null) {
             $parentData = $this->database
-                ->from($parsedUri->currentEntity->parent->name)
-                   ->find($parsedUri->currentEntity->parent->id);
+                ->from($parsedUri->currentResource->parent->name)
+                   ->find($parsedUri->currentResource->parent->id);
 
-            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-            $parentIdFromEntity = $repository->find($parsedUri->currentEntity->id)[$column];
+            $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+            $parentIdFromResource = $repository->find($parsedUri->currentResource->id)[$column];
 
-            if ($parentData === null || $parentIdFromEntity !== $parsedUri->currentEntity->parent->id) {
-                throw new NotFoundEntityException('entity not found');
+            if ($parentData === null || $parentIdFromResource !== $parsedUri->currentResource->parent->id) {
+                throw new NotFoundResourceException();
             }
         }
 
-        $repository->delete($parsedUri->currentEntity->id);
+        $repository->delete($parsedUri->currentResource->id);
 
         return $response->withStatus(204);
     }

@@ -20,7 +20,7 @@ test('should return a response from an array', function () {
     ]);
 
     $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/tests/static');
+    $request = $psr17Factory->createServerRequest('POST', 'http://localhost:8000/tests/static');
 
     $response = $middleware->handle($request, function () {
     });
@@ -35,7 +35,7 @@ test('should return a response from an file', function () {
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static.json');
 
     $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/tests/static');
+    $request = $psr17Factory->createServerRequest('POST', 'http://localhost:8000/tests/static');
 
     $response = $middleware->handle($request, function () use ($psr17Factory) {
         return $psr17Factory->createResponse(200);
@@ -59,7 +59,7 @@ test('should get response body from file if specified', function () {
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-body-file.json');
 
     $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/static-body-file');
+    $request = $psr17Factory->createServerRequest('POST', 'http://localhost:8000/static-body-file');
 
     $response = $middleware->handle($request, function () use ($psr17Factory) {
         return $psr17Factory->createResponse(200);
@@ -73,7 +73,7 @@ test('should throw exception response body from file if specified but not exists
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-body-file-missing.json');
 
     $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createRequest('POST', 'http://localhost:8000/static-body-file-missing');
+    $request = $psr17Factory->createServerRequest('POST', 'http://localhost:8000/static-body-file-missing');
 
     try {
         $response = $middleware->handle($request, function () use ($psr17Factory) {
