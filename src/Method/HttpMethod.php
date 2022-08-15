@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
-use JsonServer\Database;
-use JsonServer\Utils\ParsedUri;
 use Doctrine\Inflector\Inflector;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\ResponseInterface;
 use Doctrine\Inflector\InflectorFactory;
-use Psr\Http\Message\ServerRequestInterface;
+use JsonServer\Database;
 use JsonServer\Exceptions\EmptyBodyException;
 use JsonServer\Exceptions\NotFoundResourceException;
+use JsonServer\Utils\ParsedUri;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 abstract class HttpMethod
 {

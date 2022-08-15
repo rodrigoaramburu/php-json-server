@@ -8,6 +8,10 @@ use Doctrine\Inflector\InflectorFactory;
 
 class Query
 {
+    public const ORDER_ASC = 'ASC';
+
+    public const ORDER_DESC = 'DESC';
+
     public function __construct(
         private array $data
     ) {
@@ -56,5 +60,21 @@ class Query
         });
 
         return new Query(array_values($data));
+    }
+
+    public function orderBy(string $field, string $order = 'ASC'): Query
+    {
+        usort($this->data, function (array $a, array $b) use ($field, $order) {
+            if ($a[$field] == $b[$field]) {
+                return 0;
+            }
+            if ($order == self::ORDER_ASC) {
+                return ($a[$field] < $b[$field]) ? -1 : 1;
+            }
+
+            return ($a[$field] > $b[$field]) ? -1 : 1;
+        });
+
+        return new Query($this->data);
     }
 }

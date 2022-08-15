@@ -5,6 +5,7 @@ declare(strict_types=1);
 use JsonServer\Database;
 use JsonServer\Exceptions\NotFoundResourceException;
 use JsonServer\Exceptions\NotFoundResourceRepositoryException;
+use JsonServer\Query;
 
 afterEach(function () {
     $files = [
@@ -202,4 +203,30 @@ test('should filter a resource by field case insensitive', function () {
     expect($data[0]['title'])->toBe('Duis quis arcu mi');
     expect($data[0]['author'])->toBe('Rodrigo');
     expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should order by a field', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-shuffled.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->orderBy('title')->get();
+
+    expect($data[0]['title'])->toBe('Title 1');
+    expect($data[1]['title'])->toBe('Title 2');
+    expect($data[2]['title'])->toBe('Title 3');
+    expect($data[3]['title'])->toBe('Title 4');
+});
+
+test('should order by a field in desc order', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-shuffled.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->orderBy('title', Query::ORDER_DESC)->get();
+
+    expect($data[0]['title'])->toBe('Title 4');
+    expect($data[1]['title'])->toBe('Title 3');
+    expect($data[2]['title'])->toBe('Title 2');
+    expect($data[3]['title'])->toBe('Title 1');
 });

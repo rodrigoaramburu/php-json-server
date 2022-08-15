@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
+use JsonServer\Exceptions\NotFoundResourceRepositoryException;
+use JsonServer\Query;
 use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
 class Get extends HttpMethod
 {
@@ -15,20 +16,15 @@ class Get extends HttpMethod
     {
         $query = $this->database->from($parsedUri->currentResource->name)->query();
 
-        if ($parsedUri->currentResource->parent !== null) {
-            $query = $query
-                        ->whereParent(
-                            resourceName: $parsedUri->currentResource->parent->name,
-                            id: $parsedUri->currentResource->parent->id
-                        );
-        }
+        $query = $this->filterParent($query, $parsedUri);
 
         $params = $request->getQueryParams();
-        foreach ($params as $key => $param) {
-            $query = $query->where($key, $param);
-        }
 
         if ($parsedUri->currentResource->id === null) {
+            $query = $this->filter($query, $params);
+
+            $query = $this->order($query, $params);
+
             $data = $query->get();
         } else {
             $data = $query->find($parsedUri->currentResource->id);
@@ -40,5 +36,43 @@ class Get extends HttpMethod
         $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
 
         return $response->withBody($bodyResponse);
+    }
+
+    private function filter(Query $query, array $params): Query
+    {
+        foreach ($params as $key => $param) {
+            if (! str_starts_with($key, '_')) {
+                $query = $query->where($key, $param);
+            }
+        }
+
+        return $query;
+    }
+
+    private function order(Query $query, array $params): Query
+    {
+        foreach ($params as $key => $param) {
+            if ($key == '_sort') {
+                $query = $query->orderBy(
+                    $param,
+                    isset($params['_order']) ? strtoupper($params['_order']) : Query::ORDER_ASC
+                );
+            }
+        }
+
+        return $query;
+    }
+
+    private function filterParent(Query $query, ParsedUri $parsedUri): Query
+    {
+        if ($parsedUri->currentResource->parent !== null) {
+            $query = $query
+                        ->whereParent(
+                            resourceName: $parsedUri->currentResource->parent->name,
+                            id: $parsedUri->currentResource->parent->id
+                        );
+        }
+
+        return $query;
     }
 }

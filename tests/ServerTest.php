@@ -474,10 +474,12 @@ test('should call midlleware', function () {
 test('should include header in request', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
 
-    $middlewareCheckHeader = new class extends Middleware{
+    $middlewareCheckHeader = new class extends Middleware
+    {
         public function process(ServerRequestInterface $request, Handler $handler): ResponseInterface
         {
             expect($request->getHeader('x-my-header')[0])->toBe('example-value');
+
             return $handler->handle($request);
         }
     };
@@ -485,9 +487,7 @@ test('should include header in request', function () {
     $response = $server->handle('GET', '/posts', null, ['x-my-header' => 'example-value']);
 });
 
-
-test('should filter resources by query params', function(){
-
+test('should filter resources by query params', function () {
     $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
     $response = $server->handle('GET', '/posts?title=duis');
 
@@ -498,4 +498,26 @@ test('should filter resources by query params', function(){
     expect($data[0]['title'])->toBe('Duis quis arcu mi');
     expect($data[0]['author'])->toBe('Rodrigo');
     expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should order by query params', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-shuffled.json');
+    $response = $server->handle('GET', '/posts?_sort=title');
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data[0]['title'])->toBe('Title 1');
+    expect($data[1]['title'])->toBe('Title 2');
+    expect($data[2]['title'])->toBe('Title 3');
+    expect($data[3]['title'])->toBe('Title 4');
+});
+
+test('should order by query params in desc order', function () {
+    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-shuffled.json');
+    $response = $server->handle('GET', '/posts?_sort=title&_order=desc');
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data[0]['title'])->toBe('Title 4');
+    expect($data[1]['title'])->toBe('Title 3');
+    expect($data[2]['title'])->toBe('Title 2');
+    expect($data[3]['title'])->toBe('Title 1');
 });

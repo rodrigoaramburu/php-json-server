@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
+use JsonServer\Exceptions\NotFoundResourceException;
 use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use JsonServer\Exceptions\NotFoundResourceException;
 
 class Put extends HttpMethod
 {
