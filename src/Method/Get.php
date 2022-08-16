@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer\Method;
 
-use JsonServer\Exceptions\NotFoundResourceRepositoryException;
+use JsonServer\Exceptions\NotFoundResourceException;
 use JsonServer\Query;
 use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\ResponseInterface;
@@ -36,7 +36,7 @@ class Get extends HttpMethod
             $data = $query->find($parsedUri->currentResource->id);
 
             if ($data === null) {
-                throw new NotFoundResourceRepositoryException();
+                throw new NotFoundResourceException();
             }
 
             $data = $this->embedParent([$data])[0];
