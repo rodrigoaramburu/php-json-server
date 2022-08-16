@@ -6,11 +6,11 @@ use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-function createRequest(string $url, string $body = '', array $headers = []): ServerRequestInterface
+function createRequest(string $url, string $method = 'GET', string $body = '', array $headers = []): ServerRequestInterface
 {
     $psr17Factory = new Psr17Factory();
 
-    $request = $psr17Factory->createServerRequest('GET', $psr17Factory->createUri($url));
+    $request = $psr17Factory->createServerRequest($method, $psr17Factory->createUri($url));
 
     foreach ($headers as $key => $value) {
         $request = $request->withHeader($key, $value);
