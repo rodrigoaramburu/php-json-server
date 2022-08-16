@@ -14,7 +14,10 @@ class Get extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        $query = $this->database()->from($parsedUri->currentResource->name)->query();
+        $query = $this
+                ->database()
+                ->from($parsedUri->currentResource->name)
+                ->query();
 
         $query = $this->filterParent($query, $parsedUri);
 
@@ -26,11 +29,18 @@ class Get extends HttpMethod
             $query = $this->order($query, $params);
 
             $data = $query->get();
+
+            $data = $this->embedParent($data);
+            $data = $this->embedChildren(resources: $data, resourceName: $parsedUri->currentResource->name);
         } else {
             $data = $query->find($parsedUri->currentResource->id);
+
             if ($data === null) {
                 throw new NotFoundResourceRepositoryException();
             }
+
+            $data = $this->embedParent([$data])[0];
+            $data = $this->embedChildren(resources: [$data], resourceName: $parsedUri->currentResource->name)[0];
         }
 
         $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
@@ -74,5 +84,44 @@ class Get extends HttpMethod
         }
 
         return $query;
+    }
+
+    private function embedParent($resources): array
+    {
+        for ($i = 0; $i < count($resources); $i++) {
+            $keys = array_filter(array_keys($resources[$i]), fn ($key) => str_ends_with($key, '_id'));
+
+            foreach ($keys as $key) {
+                $field = str_replace('_id', '', $key);
+                $resourceName = $this->inflector()->pluralize($field);
+                $resourceParent = $this->database()->from($resourceName)->find($resources[$i][$key]);
+                $resources[$i][$field] = $resourceParent;
+                unset($resources[$i][$key]);
+            }
+        }
+
+        return $resources;
+    }
+
+    private function embedChildren($resources, $resourceName): array
+    {
+        $resourceNameFieldId = $this->inflector()->singularize($resourceName).'_id';
+        $childrenResourceNames = $this->database()->embedResources()[$resourceName] ?? [];
+        for ($i = 0; $i < count($resources); $i++) {
+            foreach ($childrenResourceNames as $childResourceName) {
+                $resources[$i][$childResourceName] = $this->database()
+                    ->from($childResourceName)
+                    ->query()
+                    ->where($resourceNameFieldId, (string) $resources[$i]['id'])
+                    ->get();
+                $resources[$i][$childResourceName] = array_map(function ($resource) use ($resourceNameFieldId) {
+                    unset($resource[$resourceNameFieldId]);
+
+                    return $resource;
+                }, $resources[$i][$childResourceName]);
+            }
+        }
+
+        return $resources;
     }
 }

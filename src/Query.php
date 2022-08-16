@@ -28,13 +28,13 @@ class Query
             return $data['id'] == $id;
         });
 
-        $data = reset($data);
+        $data = array_values($data);
 
         if (! $data) {
             return null;
         }
 
-        return $data;
+        return $data[0];
     }
 
     public function whereParent(string $resourceName, int $id): Query
@@ -54,8 +54,8 @@ class Query
     {
         $data = array_filter($this->data, function ($resource) use ($field, $value) {
             return str_contains(
-                strtolower($resource[$field]),
-                strtolower($value)
+                strtolower((string) $resource[$field]),
+                strtolower((string) $value)
             );
         });
 

@@ -7,6 +7,11 @@
             "JsonServer\\": "src/"
         }
     },
+    "autoload-dev": {
+        "files": [
+            "tests/helpers.php"
+        ]
+    },
     "authors": [
         {
             "name": "Rodrigo Aramburu",

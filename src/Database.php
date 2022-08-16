@@ -42,7 +42,7 @@ class Database
 
     public function from(string $resourceName): Repository
     {
-        if (! array_key_exists($resourceName, $this->resources)) {
+        if (! array_key_exists($resourceName, $this->resources) || str_starts_with($resourceName, '_')) {
             throw new NotFoundResourceRepositoryException("resource $resourceName not found");
         }
 
@@ -55,5 +55,10 @@ class Database
         ftruncate($this->fileDb, 0);
         rewind($this->fileDb);
         fwrite($this->fileDb, json_encode($this->resources, JSON_PRETTY_PRINT));
+    }
+
+    public function embedResources(): array
+    {
+        return $this->resources['embed-resources'] ?? [];
     }
 }

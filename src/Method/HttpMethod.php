@@ -70,4 +70,9 @@ abstract class HttpMethod
     {
         return $this->server->inflector();
     }
+
+    public function config(string $name): mixed
+    {
+        return $this->server->config()[$name];
+    }
 }

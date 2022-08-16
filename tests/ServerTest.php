@@ -33,11 +33,19 @@ test('should return data from a resource', function () {
 
     expect($response->getStatusCode())->toBe(200);
 
-    $expectData = json_decode(file_get_contents(__DIR__.'/fixture/db-posts.json'), true);
     $responseData = json_decode((string) $response->getBody(), true);
 
     expect($responseData)->toHaveCount(2);
-    expect($responseData)->toMatchArray($expectData['posts']);
+
+    expect($responseData[0]['id'])->toBe(1);
+    expect($responseData[0]['title'])->toBe('Lorem ipsum dolor sit amet');
+    expect($responseData[0]['author'])->toBe('Rodrigo');
+    expect($responseData[0]['content'])->toBe('Nunc volutpat ipsum eget sapien ornare...');
+
+    expect($responseData[1]['id'])->toBe(2);
+    expect($responseData[1]['title'])->toBe('Duis quis arcu mi');
+    expect($responseData[1]['author'])->toBe('Rodrigo');
+    expect($responseData[1]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
 });
 
 test('should return data from a resource with a id', function () {
@@ -269,13 +277,23 @@ test('should return resources with relationship', function () {
     expect($responseData)->toMatchArray([
         [
             'id' => 1,
-            'post_id' => 1,
             'comment' => 'Pellentesque id orci sodales, dignissim massa vel',
+            'post' => [
+                'id' => 1,
+                'title' => 'Lorem ipsum dolor sit amet',
+                'author' => 'Rodrigo',
+                'content' => 'Nunc volutpat ipsum eget sapien ornare...',
+            ],
         ],
         [
             'id' => 3,
-            'post_id' => 1,
             'comment' => 'Quisque velit tellus, tempus vitae condimentum nec',
+            'post' => [
+                'id' => 1,
+                'title' => 'Lorem ipsum dolor sit amet',
+                'author' => 'Rodrigo',
+                'content' => 'Nunc volutpat ipsum eget sapien ornare...',
+            ],
         ],
     ]);
 });
@@ -585,7 +603,7 @@ test('should load config from array', function () {
     ]);
 
     expect($server->config())->toBeArray();
-    expect($server->config())->toHaveCount(1);
+    expect($server->config())->toHaveCount(2);
     expect($server->config())->toMatchArray([
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);

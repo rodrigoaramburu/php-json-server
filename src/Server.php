@@ -122,6 +122,7 @@ class Server
 
         $this->config = array_merge([
             'database-file' => getcwd().'/db.json',
+            'embed-resources' => [],
         ], $this->config);
     }
 
