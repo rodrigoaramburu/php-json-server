@@ -17,14 +17,14 @@ class Delete extends HttpMethod
             throw new NotFoundResourceException();
         }
 
-        $repository = $this->database->from($parsedUri->currentResource->name);
+        $repository = $this->database()->from($parsedUri->currentResource->name);
 
         if ($parsedUri->currentResource->parent !== null) {
-            $parentData = $this->database
+            $parentData = $this->database()
                 ->from($parsedUri->currentResource->parent->name)
                    ->find($parsedUri->currentResource->parent->id);
 
-            $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+            $column = $this->inflector()->singularize($parsedUri->currentResource->parent->name).'_id';
             $parentIdFromResource = $repository->find($parsedUri->currentResource->id)[$column];
 
             if ($parentData === null || $parentIdFromResource !== $parsedUri->currentResource->parent->id) {

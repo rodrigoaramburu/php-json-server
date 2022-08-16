@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
 use JsonServer\Exceptions\HttpException;
 use JsonServer\Exceptions\MethodNotAllowedException;
@@ -21,9 +22,13 @@ class Server
 {
     private ?Middleware $middleware = null;
 
-    public function __construct(string $dbFileJson = 'db.json')
+    private array $config = [];
+
+    public function __construct(array|string $config = [])
     {
-        $this->database = new Database(dbFileJson: $dbFileJson);
+        $this->loadConfig($config);
+
+        $this->database = new Database(dbFileJson: $this->config['database-file']);
         $this->psr17Factory = new Psr17Factory();
         $this->inflector = InflectorFactory::create()->build();
     }
@@ -61,10 +66,10 @@ class Server
 
         try {
             $httpMethod = match ($request->getMethod()) {
-                'GET' => new Get($this->database, $this->psr17Factory),
-                'POST' => new Post($this->database, $this->psr17Factory),
-                'PUT' => new Put($this->database, $this->psr17Factory),
-                'DELETE' => new Delete($this->database, $this->psr17Factory),
+                'GET' => new Get($this),
+                'POST' => new Post($this),
+                'PUT' => new Put($this),
+                'DELETE' => new Delete($this),
                 default => null
             };
 
@@ -107,5 +112,36 @@ class Server
         $this->middleware = $middleware;
 
         return $this;
+    }
+
+    private function loadConfig(array|string $config): void
+    {
+        if (is_array($config)) {
+            $this->config = $config;
+        }
+
+        $this->config = array_merge([
+            'database-file' => getcwd().'/db.json',
+        ], $this->config);
+    }
+
+    public function config(): array
+    {
+        return $this->config;
+    }
+
+    public function database(): Database
+    {
+        return $this->database;
+    }
+
+    public function inflector(): Inflector
+    {
+        return $this->inflector;
+    }
+
+    public function psr17Factory(): Psr17Factory
+    {
+        return $this->psr17Factory;
     }
 }

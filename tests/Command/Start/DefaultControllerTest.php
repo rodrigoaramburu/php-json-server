@@ -19,7 +19,7 @@ test('should call execShell', function () {
     {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
 
             return '';
         }
@@ -55,7 +55,7 @@ test('should flag use of static middleware', function () {
     {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=true php -S localhost:8000 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=true php -S localhost:8000 ./bin/build-in-server.php');
 
             return '';
         }
@@ -73,7 +73,7 @@ test('should change the port', function () {
     {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=false php -S localhost:4321 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:4321 ./bin/build-in-server.php');
 
             return '';
         }

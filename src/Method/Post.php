@@ -12,7 +12,7 @@ class Post extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        $repository = $this->database->from($parsedUri->currentResource->name);
+        $repository = $this->database()->from($parsedUri->currentResource->name);
 
         $data = $this->bodyDecode((string) $request->getBody());
 
@@ -20,7 +20,7 @@ class Post extends HttpMethod
 
         $data = $repository->save(data: $data);
 
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
+        $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
 
         return $response
                 ->withStatus(201)

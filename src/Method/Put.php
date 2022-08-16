@@ -16,12 +16,12 @@ class Put extends HttpMethod
         if ($parsedUri->currentResource->id === null) {
             throw new NotFoundResourceException();
         }
-        $repository = $this->database->from($parsedUri->currentResource->name);
+        $repository = $this->database()->from($parsedUri->currentResource->name);
 
         $resourceData = $this->bodyDecode((string) $request->getBody());
 
         if ($parsedUri->currentResource->parent !== null) {
-            $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+            $column = $this->inflector()->singularize($parsedUri->currentResource->parent->name).'_id';
             if (! array_key_exists($column, $resourceData)) {
                 $resourceData = $this->includeParent($resourceData, $parsedUri);
             }
@@ -38,7 +38,7 @@ class Put extends HttpMethod
             $data = $repository->save(json_decode((string) $request->getBody(), true));
         }
 
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
+        $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
 
         return $response
             ->withStatus($statusCode)

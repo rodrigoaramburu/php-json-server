@@ -14,7 +14,7 @@ class Get extends HttpMethod
 {
     public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
     {
-        $query = $this->database->from($parsedUri->currentResource->name)->query();
+        $query = $this->database()->from($parsedUri->currentResource->name)->query();
 
         $query = $this->filterParent($query, $parsedUri);
 
@@ -33,7 +33,7 @@ class Get extends HttpMethod
             }
         }
 
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
+        $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
 
         return $response->withBody($bodyResponse);
     }

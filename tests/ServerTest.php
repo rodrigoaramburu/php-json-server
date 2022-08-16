@@ -25,7 +25,9 @@ afterEach(function () {
 });
 
 test('should return data from a resource', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('GET', '/posts', '');
 
@@ -39,7 +41,9 @@ test('should return data from a resource', function () {
 });
 
 test('should return data from a resource with a id', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('GET', '/posts/2', '');
 
@@ -56,7 +60,9 @@ test('should return data from a resource with a id', function () {
 });
 
 test('should return error 404 if resource not found', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('GET', '/resourceNotFound', '');
 
@@ -64,7 +70,9 @@ test('should return error 404 if resource not found', function () {
 });
 
 test('should return error 404 if resource does not exists', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('GET', '/posts/42', '');
 
@@ -72,7 +80,9 @@ test('should return error 404 if resource does not exists', function () {
 });
 
 test('should send the response to the stdout', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $psr17Factory = new Psr17Factory();
 
@@ -94,11 +104,13 @@ test('should send the response to the stdout', function () {
 });
 
 test('should save data from a post request', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-save.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-save.json';
 
-    file_put_contents($dbFileJson, '{"posts": []}');
+    file_put_contents($databaseFile, '{"posts": []}');
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('POST', '/posts', json_encode([
         'title' => 'Title Test 1',
@@ -116,7 +128,7 @@ test('should save data from a post request', function () {
         ->author->toBe('Author Test 1')
         ->content->toBe('Content Test 1');
 
-    $dataDb = json_decode(file_get_contents($dbFileJson), true);
+    $dataDb = json_decode(file_get_contents($databaseFile), true);
 
     expect($dataDb['posts'][0])->toMatchArray([
         'id' => 1,
@@ -125,15 +137,17 @@ test('should save data from a post request', function () {
         'content' => 'Content Test 1',
     ]);
 
-    unlink($dbFileJson);
+    unlink($databaseFile);
 });
 
 test('should update data from a put request', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-update.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('PUT', '/posts/2', json_encode([
         'id' => 2,
@@ -152,7 +166,7 @@ test('should update data from a put request', function () {
         ->author->toBe('Author Test changed')
         ->content->toBe('Content Test changed');
 
-    $data = json_decode(file_get_contents($dbFileJson), true);
+    $data = json_decode(file_get_contents($databaseFile), true);
 
     expect($data['posts'][1])->toMatchArray([
         'id' => 2,
@@ -163,11 +177,13 @@ test('should update data from a put request', function () {
 });
 
 test('should create an resource if resource not exists on a request put', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-update.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('PUT', '/posts/3', json_encode([
         'id' => 3,
@@ -186,7 +202,7 @@ test('should create an resource if resource not exists on a request put', functi
         ->author->toBe('Author put new')
         ->content->toBe('Content put new');
 
-    $data = json_decode(file_get_contents($dbFileJson), true);
+    $data = json_decode(file_get_contents($databaseFile), true);
 
     expect($data['posts'][2])->toMatchArray([
         'id' => 3,
@@ -197,17 +213,19 @@ test('should create an resource if resource not exists on a request put', functi
 });
 
 test('should delete an resource', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-delete.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('DELETE', '/posts/1', '');
 
     expect($response->getStatusCode())->toBe(204);
 
-    $data = json_decode(file_get_contents($dbFileJson), true);
+    $data = json_decode(file_get_contents($databaseFile), true);
 
     expect($data['posts'])->toHaveCount(1);
 
@@ -220,7 +238,9 @@ test('should delete an resource', function () {
 });
 
 test('should return error if id not exists on delete', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('DELETE', '/posts/42', '');
 
@@ -233,8 +253,10 @@ test('should return error if id not exists on delete', function () {
         ->message->toBe('Not Found');
 });
 
-test('should return entities with relationship', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+test('should return resources with relationship', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $response = $server->handle('GET', '/posts/1/comments', '');
 
@@ -261,7 +283,9 @@ test('should return entities with relationship', function () {
 test('should save an resource with a relationship', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-save.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-save.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-save.json',
+    ]);
 
     $response = $server->handle('POST', '/posts/2/comments', json_encode([
         'comment' => 'comment in a relationship',
@@ -281,7 +305,9 @@ test('should save an resource with a relationship', function () {
 test('should update an resource with a relationship', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-update.json',
+    ]);
 
     $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
         'comment' => 'modified comment',
@@ -301,7 +327,9 @@ test('should update an resource with a relationship', function () {
 test('should return 404 if parent resource in relationship does not exist', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-update.json',
+    ]);
 
     $response = $server->handle('PUT', '/posts/5/comments/2', json_encode([
         'comment' => 'modified comment',
@@ -313,7 +341,9 @@ test('should return 404 if parent resource in relationship does not exist', func
 test('should change the relationship if pass the field of parent', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-update.json',
+    ]);
 
     $response = $server->handle('PUT', '/posts/2/comments/2', json_encode([
         'comment' => 'modified comment',
@@ -334,7 +364,9 @@ test('should change the relationship if pass the field of parent', function () {
 test('should return 404 if id not found on put request', function () {
     file_put_contents(__DIR__.'/fixture/db-posts-update.json', file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-update.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-update.json',
+    ]);
 
     $response = $server->handle('PUT', '/posts/2/comments', json_encode([
         'comment' => 'modified comment',
@@ -345,17 +377,19 @@ test('should return 404 if id not found on put request', function () {
 });
 
 test('should return 404 if parent resource id not exist', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-delete.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('DELETE', '/posts/5/comments/2', '');
 
     expect($response->getStatusCode())->toBe(404);
 
-    $data = json_decode(file_get_contents($dbFileJson), true);
+    $data = json_decode(file_get_contents($databaseFile), true);
 
     expect($data['comments'][1])->toMatchArray([
         'id' => 2,
@@ -365,17 +399,19 @@ test('should return 404 if parent resource id not exist', function () {
 });
 
 test('should return 404 if resource id not belongs to parent', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-delete.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('DELETE', '/posts/1/comments/2', '');
 
     expect($response->getStatusCode())->toBe(404);
 
-    $data = json_decode(file_get_contents($dbFileJson), true);
+    $data = json_decode(file_get_contents($databaseFile), true);
 
     expect($data['comments'][1])->toMatchArray([
         'id' => 2,
@@ -385,11 +421,13 @@ test('should return 404 if resource id not belongs to parent', function () {
 });
 
 test('should return 404 if not send a id on delete request', function () {
-    $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
+    $databaseFile = __DIR__.'/fixture/db-posts-delete.json';
 
-    file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
+    file_put_contents($databaseFile, file_get_contents(__DIR__.'/fixture/db-posts.json'));
 
-    $server = new Server(dbFileJson: $dbFileJson);
+    $server = new Server([
+        'database-file' => $databaseFile,
+    ]);
 
     $response = $server->handle('DELETE', '/posts/1/comments', '');
 
@@ -397,14 +435,18 @@ test('should return 404 if not send a id on delete request', function () {
 });
 
 test('should accept null body', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
     $response = $server->handle('GET', '/posts', null);
 
     expect($response->getStatusCode())->toBe(200);
 });
 
 test('should return 400 if post request with empty body', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
     $response = $server->handle('POST', '/posts', null);
 
     expect($response->getStatusCode())->toBe(400);
@@ -417,7 +459,9 @@ test('should return 400 if post request with empty body', function () {
 });
 
 test('should return 400 if put request with empty body', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
     $response = $server->handle('PUT', '/posts/1', null);
 
     expect($response->getStatusCode())->toBe(400);
@@ -430,7 +474,9 @@ test('should return 400 if put request with empty body', function () {
 });
 
 test('should return 400 if post request with body format wrong', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
     $response = $server->handle('POST', '/posts', 'DDSS{}');
 
     expect($response->getStatusCode())->toBe(400);
@@ -443,7 +489,9 @@ test('should return 400 if post request with body format wrong', function () {
 });
 
 test('should call midlleware', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $middleware1 = new class extends Middleware
     {
@@ -472,7 +520,9 @@ test('should call midlleware', function () {
 });
 
 test('should include header in request', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
     $middlewareCheckHeader = new class extends Middleware
     {
@@ -488,7 +538,9 @@ test('should include header in request', function () {
 });
 
 test('should filter resources by query params', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
     $response = $server->handle('GET', '/posts?title=duis');
 
     $data = json_decode((string) $response->getBody(), true);
@@ -501,7 +553,9 @@ test('should filter resources by query params', function () {
 });
 
 test('should order by query params', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-shuffled.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-shuffled.json',
+    ]);
     $response = $server->handle('GET', '/posts?_sort=title');
 
     $data = json_decode((string) $response->getBody(), true);
@@ -512,7 +566,10 @@ test('should order by query params', function () {
 });
 
 test('should order by query params in desc order', function () {
-    $server = new Server(dbFileJson: __DIR__.'/fixture/db-posts-shuffled.json');
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-shuffled.json',
+    ]);
+
     $response = $server->handle('GET', '/posts?_sort=title&_order=desc');
 
     $data = json_decode((string) $response->getBody(), true);
@@ -520,4 +577,16 @@ test('should order by query params in desc order', function () {
     expect($data[1]['title'])->toBe('Title 3');
     expect($data[2]['title'])->toBe('Title 2');
     expect($data[3]['title'])->toBe('Title 1');
+});
+
+test('should load config from array', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+
+    expect($server->config())->toBeArray();
+    expect($server->config())->toHaveCount(1);
+    expect($server->config())->toMatchArray([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 });

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace JsonServer\Method;
 
 use Doctrine\Inflector\Inflector;
-use Doctrine\Inflector\InflectorFactory;
 use JsonServer\Database;
 use JsonServer\Exceptions\EmptyBodyException;
 use JsonServer\Exceptions\NotFoundResourceException;
+use JsonServer\Server;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
@@ -16,13 +16,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 abstract class HttpMethod
 {
-    protected Inflector $inflector;
-
-    public function __construct(
-        protected Database $database,
-        protected Psr17Factory $psr17Factory
-    ) {
-        $this->inflector = InflectorFactory::create()->build();
+    public function __construct(private Server $server)
+    {
     }
 
     abstract public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface;
@@ -47,17 +42,32 @@ abstract class HttpMethod
             return $data;
         }
 
-        $parentData = $this->database
-                            ->from($parsedUri->currentResource->parent->name)
-                                ->find($parsedUri->currentResource->parent->id);
+        $parentData = $this->server->database()
+                                        ->from($parsedUri->currentResource->parent->name)
+                                            ->find($parsedUri->currentResource->parent->id);
 
         if ($parentData === null) {
             throw new NotFoundResourceException();
         }
 
-        $column = $this->inflector->singularize($parsedUri->currentResource->parent->name).'_id';
+        $column = $this->server->inflector()->singularize($parsedUri->currentResource->parent->name).'_id';
         $data[$column] = $parsedUri->currentResource->parent->id;
 
         return $data;
+    }
+
+    public function database(): Database
+    {
+        return $this->server->database();
+    }
+
+    public function psr17Factory(): Psr17Factory
+    {
+        return $this->server->psr17Factory();
+    }
+
+    public function inflector(): Inflector
+    {
+        return $this->server->inflector();
     }
 }
