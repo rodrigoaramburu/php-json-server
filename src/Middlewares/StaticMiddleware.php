@@ -66,12 +66,12 @@ class StaticMiddleware extends Middleware
 
         if (array_key_exists('body-file', $route)) {
             $file = $this->pathBody.'/'.$route['body-file'];
-            if (! file_exists($this->pathBody.'/'.$route['body-file'])) {
-                throw new Exception('file not found: '.$this->pathBody.'/'.$route['body-file']);
+            if (! file_exists($file)) {
+                throw new Exception('file not found: '.$file);
             }
 
             $response = $response->withBody(
-                $psr17Factory->createStream(file_get_contents($this->pathBody.'/'.$route['body-file']) ?? '')
+                $psr17Factory->createStream(file_get_contents($file) ?? '')
             );
         }
 

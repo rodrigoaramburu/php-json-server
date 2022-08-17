@@ -44,6 +44,7 @@ abstract class HttpMethod
 
         $parentData = $this->server->database()
                                         ->from($parsedUri->currentResource->parent->name)
+                                            ->query()
                                             ->find($parsedUri->currentResource->parent->id);
 
         if ($parentData === null) {

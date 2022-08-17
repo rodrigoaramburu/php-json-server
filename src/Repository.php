@@ -15,27 +15,7 @@ class Repository
     ) {
     }
 
-    public function get(): array
-    {
-        return $this->resourceData;
-    }
-
-    public function find(int $id): ?array
-    {
-        $data = array_filter($this->resourceData, function ($data) use ($id) {
-            return $data['id'] == $id;
-        });
-
-        $data = reset($data);
-
-        if (! $data) {
-            return null;
-        }
-
-        return $data;
-    }
-
-    public function save(array $data, $parentresourceName = null, int $parentId = 0): array
+    public function save(array $data): array
     {
         $data = ['id' => $this->nextId()] + $data;
 

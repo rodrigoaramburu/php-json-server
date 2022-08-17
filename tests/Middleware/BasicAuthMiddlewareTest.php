@@ -104,13 +104,3 @@ test('should read credentials from file', function () {
     expect($response->getStatusCode())->toBe(200);
 });
 
-function createHandler(): Handler
-{
-    $handler = new Handler(function () {
-        $psr17Factory = new Psr17Factory();
-
-        return $psr17Factory->createResponse();
-    });
-
-    return $handler;
-}

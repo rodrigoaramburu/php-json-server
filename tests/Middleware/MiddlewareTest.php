@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use JsonServer\Middlewares\Handler;
 use JsonServer\Middlewares\Middleware;
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -87,14 +86,13 @@ test('should call process in order', function () {
     $middleware1->setNext($middleware2);
     $middleware2->setNext($middleware3);
 
-    $psr17Factory = new Psr17Factory();
-    $request = $psr17Factory->createServerRequest('POST', '/posts/1');
+    $request = createRequest('POST', '/posts/1');
 
-    $response = $middleware1->handle($request, function ($request) use ($psr17Factory) {
+    $response = $middleware1->handle($request, function ($request) {
         $header = $request->getHeader('requestHeaderExpected')[0];
         expect($header)->toBe('Middleware 1 - Middleware 2 - Middleware 3');
 
-        return $psr17Factory->createResponse(200);
+        return createResponse(200);
     });
 
     $header = $response->getHeader('responseHeaderExpected')[0];

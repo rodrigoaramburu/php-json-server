@@ -94,7 +94,7 @@ class Get extends HttpMethod
             foreach ($keys as $key) {
                 $field = str_replace('_id', '', $key);
                 $resourceName = $this->inflector()->pluralize($field);
-                $resourceParent = $this->database()->from($resourceName)->find($resources[$i][$key]);
+                $resourceParent = $this->database()->from($resourceName)->query()->find($resources[$i][$key]);
                 $resources[$i][$field] = $resourceParent;
                 unset($resources[$i][$key]);
             }

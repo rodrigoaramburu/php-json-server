@@ -22,10 +22,11 @@ class Delete extends HttpMethod
         if ($parsedUri->currentResource->parent !== null) {
             $parentData = $this->database()
                 ->from($parsedUri->currentResource->parent->name)
+                    ->query()
                    ->find($parsedUri->currentResource->parent->id);
 
             $column = $this->inflector()->singularize($parsedUri->currentResource->parent->name).'_id';
-            $parentIdFromResource = $repository->find($parsedUri->currentResource->id)[$column];
+            $parentIdFromResource = $repository->query()->find($parsedUri->currentResource->id)[$column];
 
             if ($parentData === null || $parentIdFromResource !== $parsedUri->currentResource->parent->id) {
                 throw new NotFoundResourceException();

@@ -21,10 +21,14 @@ afterEach(function () {
     }
 });
 
+test('should throw an exception if database file dont exist', function () {
+    $database = new Database(__DIR__.'/fixture/db-posts-missing.json');
+})->throws(RuntimeException::class, 'cannot open file '.__DIR__.'/fixture/db-posts-missing.json');
+
 test('should return data from resource', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->get();
+    $data = $database->from('posts')->query()->get();
 
     expect($data)->toBeArray();
     expect($data)->toHaveCount(2);
@@ -46,7 +50,7 @@ test('should return data from resource', function () {
 test('should return an resource by id', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->find(2);
+    $data = $database->from('posts')->query()->find(2);
 
     expect($data)->toBeArray();
     expect($data)->toMatchArray([
@@ -60,7 +64,7 @@ test('should return an resource by id', function () {
 test('should return null if id does not exists', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->find(3);
+    $data = $database->from('posts')->query()->find(3);
 
     expect($data)->toBeNull();
 });
@@ -102,7 +106,7 @@ test('should save an resource and add a sequencial id', function () {
 test('should throw a exception if resource not exists', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $database->from('resourceNotFound')->get();
+    $database->from('resourceNotFound')->query()->get();
 })->throws(NotFoundResourceRepositoryException::class);
 
 test('should update an resource', function () {

@@ -10,6 +10,7 @@ use JsonServer\Exceptions\HttpException;
 use JsonServer\Exceptions\MethodNotAllowedException;
 use JsonServer\Method\Delete;
 use JsonServer\Method\Get;
+use JsonServer\Method\HttpMethod;
 use JsonServer\Method\Post;
 use JsonServer\Method\Put;
 use JsonServer\Middlewares\Middleware;
@@ -28,7 +29,7 @@ class Server
     {
         $this->loadConfig($config);
 
-        $this->database = new Database(dbFileJson: $this->config['database-file']);
+        $this->database = new Database(databasefile: $this->config['database-file']);
         $this->psr17Factory = new Psr17Factory();
         $this->inflector = InflectorFactory::create()->build();
     }
@@ -65,19 +66,9 @@ class Server
         $parsedUri = ParsedUri::parseUri($request->getUri()->getPath());
 
         try {
-            $httpMethod = match ($request->getMethod()) {
-                'GET' => new Get($this),
-                'POST' => new Post($this),
-                'PUT' => new Put($this),
-                'DELETE' => new Delete($this),
-                default => null
-            };
+            $httpMethodHandler = $this->httpMethodHandler($request->getMethod());
 
-            if ($httpMethod == null) {
-                throw new MethodNotAllowedException();
-            }
-
-            return $httpMethod->execute($request, $response, $parsedUri);
+            return $httpMethodHandler->execute($request, $response, $parsedUri);
         } catch (HttpException $e) {
             $bodyResponse = $this->psr17Factory->createStream(json_encode([
                 'statusCode' => $e->getCode(),
@@ -88,6 +79,19 @@ class Server
                 ->withStatus($e->getCode())
                 ->withBody($bodyResponse);
         }
+    }
+
+    public function httpMethodHandler(string $httpMethod): HttpMethod
+    {
+        $httpMehtodHandler = match (strtoupper($httpMethod)) {
+            'GET' => new Get($this),
+            'POST' => new Post($this),
+            'PUT' => new Put($this),
+            'DELETE' => new Delete($this),
+            default => throw new MethodNotAllowedException()
+        };
+
+        return $httpMehtodHandler;
     }
 
     public function send(ResponseInterface $response): void
@@ -102,6 +106,9 @@ class Server
 
     public function addMiddleware(Middleware $middleware): self
     {
+        $middleware->setDatabase($this->database);
+        $middleware->setConfig($this->config);
+
         if ($this->middleware === null) {
             $this->middleware = $middleware;
 

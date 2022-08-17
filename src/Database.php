@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
+use ErrorException;
 use InvalidArgumentException;
 use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
@@ -13,25 +14,26 @@ class Database
 
     private array $resources = [];
 
-    public function __construct(string $dbFileJson = 'db.json')
+    public function __construct(string $databasefile = 'database.json')
     {
-        $this->fileDb = fopen($dbFileJson, 'r+b');
+        try {
+            $this->fileDb = fopen($databasefile, 'r+b');
 
-        if (! $this->fileDb) {
-            throw new \RuntimeException("cannot open file $dbFileJson");
-        }
-        flock($this->fileDb, LOCK_EX);
-        $jsonString = filesize($dbFileJson) > 0 ? fread($this->fileDb, filesize($dbFileJson)) : null;
-        if ($jsonString !== null) {
-            $resources = json_decode($jsonString, true);
+            flock($this->fileDb, LOCK_EX);
+            $jsonString = filesize($databasefile) > 0 ? fread($this->fileDb, filesize($databasefile)) : null;
+            if ($jsonString !== null) {
+                $resources = json_decode($jsonString, true);
 
-            if (is_array($resources)) {
-                foreach ($resources as $key => $resource) {
-                    $this->resources[$key] = $resource;
+                if (is_array($resources)) {
+                    foreach ($resources as $key => $resource) {
+                        $this->resources[$key] = $resource;
+                    }
                 }
+            } else {
+                throw new InvalidArgumentException('data is not a JSON string');
             }
-        } else {
-            throw new InvalidArgumentException('data is not a JSON string');
+        } catch (ErrorException $e) {
+            throw new \RuntimeException("cannot open file $databasefile");
         }
     }
 
