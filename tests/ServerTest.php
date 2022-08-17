@@ -18,117 +18,81 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-test('should call process with object request and response with request data', function () {
-    $server = new class extends Server
-    {
-        public function __construct()
-        {
-            parent::__construct(['database-file' => __DIR__.'/fixture/db-posts.json']);
+afterEach(function () {
+    $files = [
+        __DIR__.'/fixture/db-posts-save.json',
+        __DIR__.'/fixture/db-posts-update.json',
+        __DIR__.'/fixture/db-posts-delete.json',
+    ];
+
+    foreach ($files as $file) {
+        if (file_exists($file)) {
+            unlink($file);
         }
-
-        public function process(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-        {
-            expect($request->getMethod())->toBe('POST');
-            expect($request->getUri()->getPath())->toBe('/posts');
-            expect((string) $request->getBody())->toBe('body text');
-            expect($request->getHeaders())->toMatchArray([
-                'header1' => ['valueHeader1'],
-            ]);
-            expect($request->getQueryParams())->toMatchArray([
-                'param1' => 'teste1',
-                'param2' => 'teste2',
-            ]);
-
-            return $response;
-        }
-    };
-
-    $server->handle('POST', '/posts?param1=teste1&param2=teste2', 'body text', ['header1' => 'valueHeader1']);
+    }
 });
 
-test('should return httpMethod object according to request method', function () {
+test('should return data from a resource', function () {
     $server = new Server([
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
 
-    $httpMethodGet = $server->httpMethodHandler('GET');
-    expect($httpMethodGet)->toBeInstanceOf(Get::class);
+    $response = $server->handle('GET', '/posts', '');
 
-    $httpMethodGet = $server->httpMethodHandler('POST');
-    expect($httpMethodGet)->toBeInstanceOf(Post::class);
+    expect($response->getStatusCode())->toBe(200);
 
-    $httpMethodGet = $server->httpMethodHandler('PUT');
-    expect($httpMethodGet)->toBeInstanceOf(Put::class);
+    $responseData = json_decode((string) $response->getBody(), true);
 
-    $httpMethodGet = $server->httpMethodHandler('DELETE');
-    expect($httpMethodGet)->toBeInstanceOf(Delete::class);
+    expect($responseData)->toHaveCount(2);
+
+    expect($responseData[0]['id'])->toBe(1);
+    expect($responseData[0]['title'])->toBe('Lorem ipsum dolor sit amet');
+    expect($responseData[0]['author'])->toBe('Rodrigo');
+    expect($responseData[0]['content'])->toBe('Nunc volutpat ipsum eget sapien ornare...');
+
+    expect($responseData[1]['id'])->toBe(2);
+    expect($responseData[1]['title'])->toBe('Duis quis arcu mi');
+    expect($responseData[1]['author'])->toBe('Rodrigo');
+    expect($responseData[1]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
 });
 
-test('should throw exception if httpMethod not found', function () {
+test('should return data from a resource with a id', function () {
     $server = new Server([
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
 
-    $httpMethodHandler = $server->httpMethodHandler('TEST');
-})->throws(MethodNotAllowedException::class);
+    $response = $server->handle('GET', '/posts/2', '');
 
-test('should call method execute of httpMehtodHandler', function () {
-    $server = new class extends Server
-    {
-        public function __construct()
-        {
-            parent::__construct(['database-file' => __DIR__.'/fixture/db-posts.json']);
-        }
+    expect($response->getStatusCode())->toBe(200);
 
-        public function httpMethodHandler(string $httpMethod): HttpMethod
-        {
-            return new class($this) extends HttpMethod
-            {
-                public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
-                {
-                    expect($request)->toBeInstanceOf(ServerRequestInterface::class);
-                    expect($response)->toBeInstanceOf(ResponseInterface::class);
+    $responseData = json_decode((string) $response->getBody(), true);
 
-                    return $response;
-                }
-            };
-        }
-    };
-
-    $server->handle('GET', '/posts');
+    expect($responseData)->toMatchArray([
+        'id' => 2,
+        'title' => 'Duis quis arcu mi',
+        'author' => 'Rodrigo',
+        'content' => 'Suspendisse auctor dolor risus, vel posuere libero...',
+    ]);
 });
 
-test('should config erro in response if httpMehtodHandler throw http exception', function () {
-    $server = new class extends Server
-    {
-        public function __construct()
-        {
-            parent::__construct(['database-file' => __DIR__.'/fixture/db-posts.json']);
-        }
+test('should return error 404 if resource not found', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
 
-        public function httpMethodHandler(string $httpMethod): HttpMethod
-        {
-            return new class($this) extends HttpMethod
-            {
-                public function execute(ServerRequestInterface $request, ResponseInterface $response, ParsedUri $parsedUri): ResponseInterface
-                {
-                    throw new NotFoundResourceException();
-
-                    return $response;
-                }
-            };
-        }
-    };
-
-    $response = $server->handle('GET', '/posts/1');
+    $response = $server->handle('GET', '/resourceNotFound', '');
 
     expect($response->getStatusCode())->toBe(404);
+});
 
-    $data = json_decode((string) $response->getBody(), true);
-    expect($data)->toMatchArray([
-        'statusCode' => 404,
-        'message' => 'Not Found',
+test('should return error 404 if resource does not exists', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
+
+    $response = $server->handle('GET', '/posts/42', '');
+
+    expect($response->getStatusCode())->toBe(404);
 });
 
 test('should send the response to the stdout', function () {
@@ -156,6 +120,51 @@ test('should accept null body', function () {
     $response = $server->handle('GET', '/posts', null);
 
     expect($response->getStatusCode())->toBe(200);
+});
+
+test('should return 400 if post request with empty body', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+    $response = $server->handle('POST', '/posts', null);
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
+});
+
+test('should return 400 if put request with empty body', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+    $response = $server->handle('PUT', '/posts/1', null);
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
+});
+
+test('should return 400 if post request with body format wrong', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+    $response = $server->handle('POST', '/posts', 'DDSS{}');
+
+    expect($response->getStatusCode())->toBe(400);
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data)->toMatchArray([
+        'statusCode' => 400,
+        'message' => 'Empty Body',
+    ]);
 });
 
 test('should call midlleware', function () {
@@ -194,7 +203,7 @@ test('should inject the database and config into middleware', function () {
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
 
-    $middleware = new class extends Middleware
+    $middlewareCheckHeader = new class extends Middleware
     {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
@@ -207,10 +216,50 @@ test('should inject the database and config into middleware', function () {
             return $handler->handle($request);
         }
     };
+    $server->addMiddleware($middlewareCheckHeader);
+    $response = $server->handle('GET', '/posts', null, ['x-my-header' => 'example-value']);
+});
 
-    $server->addMiddleware($middleware);
+test('should filter resources by query params', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+    $response = $server->handle('GET', '/posts?title=duis');
 
-    $response = $server->handle('GET', '/posts');
+    $data = json_decode((string) $response->getBody(), true);
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should order by query params', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-shuffled.json',
+    ]);
+    $response = $server->handle('GET', '/posts?_sort=title');
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data[0]['title'])->toBe('Title 1');
+    expect($data[1]['title'])->toBe('Title 2');
+    expect($data[2]['title'])->toBe('Title 3');
+    expect($data[3]['title'])->toBe('Title 4');
+});
+
+test('should order by query params in desc order', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts-shuffled.json',
+    ]);
+
+    $response = $server->handle('GET', '/posts?_sort=title&_order=desc');
+
+    $data = json_decode((string) $response->getBody(), true);
+    expect($data[0]['title'])->toBe('Title 4');
+    expect($data[1]['title'])->toBe('Title 3');
+    expect($data[2]['title'])->toBe('Title 2');
+    expect($data[3]['title'])->toBe('Title 1');
 });
 
 test('should load config from array', function () {

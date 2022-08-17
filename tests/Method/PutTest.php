@@ -112,6 +112,7 @@ test('should update an resource with a relationship', function () {
         ],
     ]);
 
+
     $data = json_decode(file_get_contents($this->databaseFile), true);
 
     expect($data['comments'][1])->toMatchArray([
@@ -134,6 +135,7 @@ test('should change the relationship if pass the field of parent', function () {
     ]));
 
     expect($response->getStatusCode())->toBe(200);
+
 
     $responseBody = json_decode((string) $response->getBody(), true);
     expect($responseBody)->toMatchArray([
