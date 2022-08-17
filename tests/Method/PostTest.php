@@ -72,6 +72,18 @@ test('should save an resource with a relationship', function () {
 
     expect($response->getStatusCode())->toBe(201);
 
+    $responseBody = json_decode((string) $response->getBody(), true);
+    expect($responseBody)->toMatchArray([
+        'id' => 4,
+        'comment' => 'comment in a relationship',
+        'post' => [
+            'id' => 2,
+            'title' => 'Duis quis arcu mi',
+            'author' => 'Rodrigo',
+            'content' => 'Suspendisse auctor dolor risus, vel posuere libero...',
+        ],
+    ]);
+
     $data = json_decode(file_get_contents(__DIR__.'/../fixture/db-posts-save.json'), true);
 
     expect($data['comments'][3])->toMatchArray([

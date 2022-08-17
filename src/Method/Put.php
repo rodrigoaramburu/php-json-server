@@ -38,6 +38,7 @@ class Put extends HttpMethod
             $data = $repository->save(json_decode((string) $request->getBody(), true));
         }
 
+        $data = $this->embedParent([$data])[0];
         $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
 
         return $response

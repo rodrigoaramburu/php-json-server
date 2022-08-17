@@ -80,14 +80,15 @@ test('should throw exception response body from file if specified but not exists
     }
 });
 
-test('should pass forward if route not found', function(){
+test('should pass forward if route not found', function () {
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static.json');
 
     $request = createRequest('http://localhost:8000/tests/static-missing', 'POST');
 
     $callHandler = false;
-    $response = $middleware->handle($request, function () use (&$callHandler){
+    $response = $middleware->handle($request, function () use (&$callHandler) {
         $callHandler = true;
+
         return createResponse(200);
     });
 

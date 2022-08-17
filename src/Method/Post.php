@@ -20,6 +20,8 @@ class Post extends HttpMethod
 
         $data = $repository->save(data: $data);
 
+        $data = $this->embedParent([$data])[0];
+
         $bodyResponse = $this->psr17Factory()->createStream(json_encode($data));
 
         return $response

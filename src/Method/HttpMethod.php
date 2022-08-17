@@ -76,4 +76,43 @@ abstract class HttpMethod
     {
         return $this->server->config()[$name];
     }
+
+    protected function embedParent($resources): array
+    {
+        for ($i = 0; $i < count($resources); $i++) {
+            $keys = array_filter(array_keys($resources[$i]), fn ($key) => str_ends_with($key, '_id'));
+
+            foreach ($keys as $key) {
+                $field = str_replace('_id', '', $key);
+                $resourceName = $this->inflector()->pluralize($field);
+                $resourceParent = $this->database()->from($resourceName)->query()->find($resources[$i][$key]);
+                $resources[$i][$field] = $resourceParent;
+                unset($resources[$i][$key]);
+            }
+        }
+
+        return $resources;
+    }
+
+    protected function embedChildren($resources, $resourceName): array
+    {
+        $resourceNameFieldId = $this->inflector()->singularize($resourceName).'_id';
+        $childrenResourceNames = $this->database()->embedResources()[$resourceName] ?? [];
+        for ($i = 0; $i < count($resources); $i++) {
+            foreach ($childrenResourceNames as $childResourceName) {
+                $resources[$i][$childResourceName] = $this->database()
+                    ->from($childResourceName)
+                    ->query()
+                    ->where($resourceNameFieldId, (string) $resources[$i]['id'])
+                    ->get();
+                $resources[$i][$childResourceName] = array_map(function ($resource) use ($resourceNameFieldId) {
+                    unset($resource[$resourceNameFieldId]);
+
+                    return $resource;
+                }, $resources[$i][$childResourceName]);
+            }
+        }
+
+        return $resources;
+    }
 }
