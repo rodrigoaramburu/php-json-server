@@ -8,22 +8,19 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 test('should add next middlware in the end of the chain', function () {
-    $middleware1 = new class extends Middleware
-    {
+    $middleware1 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             return $handler->handle($request);
         }
     };
-    $middleware2 = new class extends Middleware
-    {
+    $middleware2 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             return $handler->handle($request);
         }
     };
-    $middleware3 = new class extends Middleware
-    {
+    $middleware3 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             return $handler->handle($request);
@@ -38,8 +35,7 @@ test('should add next middlware in the end of the chain', function () {
 });
 
 test('should call process in order', function () {
-    $middleware1 = new class extends Middleware
-    {
+    $middleware1 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             $header = 'Middleware 1 -';
@@ -53,8 +49,7 @@ test('should call process in order', function () {
             return $response;
         }
     };
-    $middleware2 = new class extends Middleware
-    {
+    $middleware2 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             $header = $request->getHeader('requestHeaderExpected')[0].' Middleware 2 -';
@@ -68,8 +63,7 @@ test('should call process in order', function () {
             return $response;
         }
     };
-    $middleware3 = new class extends Middleware
-    {
+    $middleware3 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             $header = $request->getHeader('requestHeaderExpected')[0].' Middleware 3';

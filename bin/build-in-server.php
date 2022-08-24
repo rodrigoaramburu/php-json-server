@@ -16,7 +16,7 @@ $server = new Server([
 ]);
 
 if ($_ENV['USE_STATIC_ROUTE'] == 'true') {
-    $staticMiddeware = new StaticMiddleware($dataDir.'/static.json');
+    $staticMiddeware = new StaticMiddleware($_ENV['DATA_DIR'].'/static.json');
     $server->addMiddleware($staticMiddeware);
 }
 

@@ -25,7 +25,7 @@ class ParsedUri
         $currentResource = null;
         for ($i = 0; $i < count($parts); $i += 2) {
             $tmp = $currentResource;
-            $currentResource = new stdClass;
+            $currentResource = new stdClass();
             $currentResource->name = $parts[$i];
             $currentResource->id = array_key_exists($i + 1, $parts) ? (int) $parts[$i + 1] : null;
             $currentResource->parent = $tmp;

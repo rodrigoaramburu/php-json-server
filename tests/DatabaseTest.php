@@ -175,7 +175,9 @@ test('should filter an resource by its parents', function () {
     $comments = $database
                     ->from('comments')
                     ->query()
-                        ->whereParent('posts', 1
+                        ->whereParent(
+                            'posts',
+                            1
                         )->get();
 
     expect($comments)->toHaveCount(2);

@@ -61,7 +61,7 @@ class StaticMiddleware extends Middleware
     {
         $psr17Factory = new Psr17Factory();
 
-        $response = $psr17Factory->createResponse($route['statusCode'] ?? 200)
+        $response = $psr17Factory->createResponse(intval($route['statusCode']) ?? 200)
                         ->withBody($psr17Factory->createStream($route['body'] ?? ''));
 
         if (array_key_exists('body-file', $route)) {

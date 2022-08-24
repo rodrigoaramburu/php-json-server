@@ -3,20 +3,11 @@
 declare(strict_types=1);
 
 use JsonServer\Database;
-use JsonServer\Exceptions\MethodNotAllowedException;
-use JsonServer\Exceptions\NotFoundResourceException;
-use JsonServer\Method\Delete;
-use JsonServer\Method\Get;
-use JsonServer\Method\HttpMethod;
-use JsonServer\Method\Post;
-use JsonServer\Method\Put;
 use JsonServer\Middlewares\Handler;
 use JsonServer\Middlewares\Middleware;
 use JsonServer\Server;
-use JsonServer\Utils\ParsedUri;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 
 afterEach(function () {
     $files = [
@@ -172,16 +163,14 @@ test('should call midlleware', function () {
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
 
-    $middleware1 = new class extends Middleware
-    {
+    $middleware1 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             return $handler->handle($request)->withHeader('Md1', 'teste 1');
         }
     };
 
-    $middleware2 = new class extends Middleware
-    {
+    $middleware2 = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             return $handler->handle($request)->withHeader('Md2', 'teste 2');
@@ -203,8 +192,7 @@ test('should inject the database and config into middleware', function () {
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
 
-    $middlewareCheckHeader = new class extends Middleware
-    {
+    $middlewareCheckHeader = new class () extends Middleware {
         public function process(RequestInterface $request, Handler $handler): ResponseInterface
         {
             expect($this->database())->toBeInstanceOf(Database::class);
