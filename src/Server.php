@@ -50,7 +50,10 @@ class Server
 
         $response = $this->psr17Factory
                                 ->createResponse(200)
-                                ->withHeader('Content-type', 'application/json');
+                                ->withHeader('Content-type', 'application/json')
+                                ->withHeader('Access-Control-Allow-Origin', '*')
+                                ->withHeader('Access-Control-Allow-Headers', '*')
+                                ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 
         if ($this->middleware !== null) {
             return $this->middleware->handle($request, function ($request) use ($response) {
