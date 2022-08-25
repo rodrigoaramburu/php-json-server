@@ -2,6 +2,7 @@
     "name": "rodrigoaramburu/php-json-server",
     "type": "library",
     "description": "Biblioteca para criar uma API Rest fake para prototipação de front-end",
+    "license":"MIT",
     "autoload": {
         "psr-4": {
             "JsonServer\\": "src/"
