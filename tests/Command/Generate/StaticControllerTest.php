@@ -116,3 +116,39 @@ test('should ask values to generate static.json', function(){
         ]);
 
 })->expectOutputRegex('/.*/');
+
+
+test("should generate static.json with empty header if param header empty", function(){
+
+    $filename = getcwd().'/static.json';
+
+    $staticCommand = new StaticController();
+    $staticCommand->boot($this->commandApp);
+
+    $input = new CommandCall([
+        'json-server', 
+        'generate', 
+        'static', 
+        'path="/routes/static"',
+        'method="GET"',    
+        'body="body response"',    
+        'headers=""',    
+        'statusCode="201"',    
+    ]);
+
+    $staticCommand->run($input);
+
+    $staticData = json_decode(file_get_contents($filename), true);
+    expect($staticData)->toMatchArray(
+        [
+            '/routes/static' => [
+                "GET" => [
+                    'body' => 'body response',
+                    'statusCode' => '201',
+                    'headers' => [],
+                ]
+            ]
+        ]);
+
+
+})->expectOutputRegex('/.*/');

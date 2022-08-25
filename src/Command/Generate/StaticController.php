@@ -79,6 +79,10 @@ class StaticController extends CommandController
     public function getHeaders(): array
     {
         if ($this->hasParam('headers')) {
+            $headers = trim($this->getParam('headers'),'"');
+            if( empty($headers)){
+                return [];
+            }
             $headersExplode = explode('|', trim($this->getParam('headers') ,'"'));
 
             $headers = [];
