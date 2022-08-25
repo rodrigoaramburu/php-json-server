@@ -13,7 +13,7 @@ class DefaultController extends CommandController
         $this->getPrinter()->info('Iniciando Servidor...');
 
         $params = [
-            'DATA_DIR' => $this->input->params['data-dir'] ?? '.',
+            'DATA_DIR' => $this->input->params['data-dir'] ?? getcwd(),
             'USE_STATIC_ROUTE' => in_array('--use-static-route', $this->input->flags) ? 'true' : 'false',
         ];
 

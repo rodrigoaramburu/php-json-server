@@ -1,4 +1,7 @@
 {
+    "embed-resources": {
+            "posts": ["comments"]
+    },
     "posts":[
         {   
             "id": 1,

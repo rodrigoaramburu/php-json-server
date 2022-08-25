@@ -3,8 +3,9 @@
 declare(strict_types=1);
 
 use JsonServer\Database;
-use JsonServer\Exceptions\NotFoundEntityException;
-use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+use JsonServer\Exceptions\NotFoundResourceException;
+use JsonServer\Exceptions\NotFoundResourceRepositoryException;
+use JsonServer\Query;
 
 afterEach(function () {
     $files = [
@@ -20,10 +21,14 @@ afterEach(function () {
     }
 });
 
-test('should return data from entity', function () {
+test('should throw an exception if database file dont exist', function () {
+    $database = new Database(__DIR__.'/fixture/db-posts-missing.json');
+})->throws(RuntimeException::class, 'cannot open file '.__DIR__.'/fixture/db-posts-missing.json');
+
+test('should return data from resource', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->get();
+    $data = $database->from('posts')->query()->get();
 
     expect($data)->toBeArray();
     expect($data)->toHaveCount(2);
@@ -42,10 +47,10 @@ test('should return data from entity', function () {
     ]);
 });
 
-test('should return an entity by id', function () {
+test('should return an resource by id', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->find(2);
+    $data = $database->from('posts')->query()->find(2);
 
     expect($data)->toBeArray();
     expect($data)->toMatchArray([
@@ -59,12 +64,12 @@ test('should return an entity by id', function () {
 test('should return null if id does not exists', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $data = $database->from('posts')->find(3);
+    $data = $database->from('posts')->query()->find(3);
 
     expect($data)->toBeNull();
 });
 
-test('should save an entity and add a sequencial id', function () {
+test('should save an resource and add a sequencial id', function () {
     $dbJsonDir = __DIR__.'/fixture/db-posts-save.json';
     file_put_contents($dbJsonDir, '{"posts": []}');
 
@@ -98,13 +103,13 @@ test('should save an entity and add a sequencial id', function () {
     ]);
 });
 
-test('should throw a exception if entity not exists', function () {
+test('should throw a exception if resource not exists', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');
 
-    $database->from('entityNotFound')->get();
-})->throws(NotFoundEntityRepositoryException::class);
+    $database->from('resourceNotFound')->query()->get();
+})->throws(NotFoundResourceRepositoryException::class);
 
-test('should update an entity', function () {
+test('should update an resource', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-update.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -134,7 +139,7 @@ test('should update an entity', function () {
     ]);
 });
 
-test('should delete an entity', function () {
+test('should delete an resource', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts-delete.json';
 
     file_put_contents($dbFileJson, file_get_contents(__DIR__.'/fixture/db-posts.json'));
@@ -160,9 +165,9 @@ test('should throw an exception if id not exists', function () {
     $database = new Database($dbFileJson);
 
     $database->from('posts')->delete(3);
-})->throws(NotFoundEntityException::class);
+})->throws(NotFoundResourceException::class);
 
-test('should filter an entity by its parents', function () {
+test('should filter an resource by its parents', function () {
     $dbFileJson = __DIR__.'/fixture/db-posts.json';
 
     $database = new Database($dbFileJson);
@@ -170,8 +175,64 @@ test('should filter an entity by its parents', function () {
     $comments = $database
                     ->from('comments')
                     ->query()
-                        ->whereParent('posts', 1
+                        ->whereParent(
+                            'posts',
+                            1
                         )->get();
 
     expect($comments)->toHaveCount(2);
+});
+
+test('should filter a resource by field', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->where('title', 'Duis')->get();
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should filter a resource by field case insensitive', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->where('title', 'duis')->get();
+
+    expect($data)->toHaveCount(1);
+
+    expect($data[0]['title'])->toBe('Duis quis arcu mi');
+    expect($data[0]['author'])->toBe('Rodrigo');
+    expect($data[0]['content'])->toBe('Suspendisse auctor dolor risus, vel posuere libero...');
+});
+
+test('should order by a field', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-shuffled.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->orderBy('title')->get();
+
+    expect($data[0]['title'])->toBe('Title 1');
+    expect($data[1]['title'])->toBe('Title 2');
+    expect($data[2]['title'])->toBe('Title 3');
+    expect($data[3]['title'])->toBe('Title 4');
+});
+
+test('should order by a field in desc order', function () {
+    $dbFileJson = __DIR__.'/fixture/db-posts-shuffled.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->orderBy('title', Query::ORDER_DESC)->get();
+
+    expect($data[0]['title'])->toBe('Title 4');
+    expect($data[1]['title'])->toBe('Title 3');
+    expect($data[2]['title'])->toBe('Title 2');
+    expect($data[3]['title'])->toBe('Title 1');
 });

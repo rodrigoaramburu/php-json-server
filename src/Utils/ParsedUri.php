@@ -9,7 +9,7 @@ use stdClass;
 class ParsedUri
 {
     private function __construct(
-        public readonly ?object $currentEntity
+        public readonly ?object $currentResource
     ) {
     }
 
@@ -22,17 +22,17 @@ class ParsedUri
         $parts = array_values(array_filter($parts, fn ($v) => ! empty($v)));
 
         $parent = null;
-        $currentEntity = null;
+        $currentResource = null;
         for ($i = 0; $i < count($parts); $i += 2) {
-            $tmp = $currentEntity;
-            $currentEntity = new stdClass;
-            $currentEntity->name = $parts[$i];
-            $currentEntity->id = array_key_exists($i + 1, $parts) ? (int) $parts[$i + 1] : null;
-            $currentEntity->parent = $tmp;
+            $tmp = $currentResource;
+            $currentResource = new stdClass();
+            $currentResource->name = $parts[$i];
+            $currentResource->id = array_key_exists($i + 1, $parts) ? (int) $parts[$i + 1] : null;
+            $currentResource->parent = $tmp;
         }
 
         return new ParsedUri(
-            currentEntity: $currentEntity
+            currentResource: $currentResource
         );
     }
 }

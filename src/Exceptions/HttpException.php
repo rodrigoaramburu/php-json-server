@@ -6,6 +6,6 @@ namespace JsonServer\Exceptions;
 
 use Exception;
 
-class NotFoundEntityRepositoryException extends Exception
+class HttpException extends Exception
 {
 }

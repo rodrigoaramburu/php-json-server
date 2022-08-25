@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace JsonServer\Exceptions;
 
-class EmptyBodyException extends HttpException
+class NotFoundResourceException extends HttpException
 {
     public function __construct()
     {
-        parent::__construct('Empty Body', 400);
+        parent::__construct('Not Found', 404);
     }
 }

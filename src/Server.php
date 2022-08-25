@@ -6,33 +6,42 @@ namespace JsonServer;
 
 use Doctrine\Inflector\Inflector;
 use Doctrine\Inflector\InflectorFactory;
-use Exception;
-use JsonServer\Exceptions\EmptyBodyException;
-use JsonServer\Exceptions\NotFoundEntityException;
-use JsonServer\Exceptions\NotFoundEntityRepositoryException;
+use JsonServer\Exceptions\HttpException;
+use JsonServer\Exceptions\MethodNotAllowedException;
+use JsonServer\Method\Delete;
+use JsonServer\Method\Get;
+use JsonServer\Method\HttpMethod;
+use JsonServer\Method\Post;
+use JsonServer\Method\Put;
 use JsonServer\Middlewares\Middleware;
 use JsonServer\Utils\ParsedUri;
 use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Server
 {
-    private Inflector $inflector;
-
     private ?Middleware $middleware = null;
 
-    public function __construct(string $dbFileJson = 'db.json')
+    private array $config = [];
+
+    public function __construct(array|string $config = [])
     {
-        $this->database = new Database(dbFileJson: $dbFileJson);
+        $this->loadConfig($config);
+
+        $this->database = new Database(databasefile: $this->config['database-file']);
         $this->psr17Factory = new Psr17Factory();
         $this->inflector = InflectorFactory::create()->build();
     }
 
     public function handle(string $method, string $uri, ?string $body = null, ?array $headers = []): ResponseInterface
     {
+        $query = parse_url($uri);
+        parse_str($query['query'] ?? '', $query);
+
         $request = $this->psr17Factory
-                            ->createRequest($method, $uri)
+                            ->createServerRequest($method, $uri)
+                            ->withQueryParams($query)
                             ->withBody($this->psr17Factory->createStream($body ?? ''));
 
         foreach ($headers as $key => $value) {
@@ -41,7 +50,10 @@ class Server
 
         $response = $this->psr17Factory
                                 ->createResponse(200)
-                                ->withHeader('Content-type', 'application/json');
+                                ->withHeader('Content-type', 'application/json')
+                                ->withHeader('Access-Control-Allow-Origin', '*')
+                                ->withHeader('Access-Control-Allow-Headers', '*')
+                                ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 
         if ($this->middleware !== null) {
             return $this->middleware->handle($request, function ($request) use ($response) {
@@ -52,142 +64,37 @@ class Server
         return $this->process($request, $response);
     }
 
-    public function process(RequestInterface $request, ResponseInterface $response): ResponseInterface
+    public function process(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
     {
         $parsedUri = ParsedUri::parseUri($request->getUri()->getPath());
 
-        if (in_array($request->getMethod(), ['GET', 'POST', 'PUT', 'DELETE'])) {
-            try {
-                return call_user_func(
-                    [$this, strtolower($request->getMethod())],
-                    $parsedUri,
-                    (string) $request->getBody(),
-                    $response
-                );
-            } catch (NotFoundEntityException|NotFoundEntityRepositoryException  $e) {
-                $bodyResponse = $this->psr17Factory->createStream(json_encode([
-                    'statusCode' => 404,
-                    'message' => 'Not Found',
-                ]));
-
-                return $response
-                    ->withStatus(404)
-                    ->withBody($bodyResponse);
-            } catch (EmptyBodyException $e) {
-                $bodyResponse = $this->psr17Factory->createStream(json_encode([
-                    'statusCode' => 400,
-                    'message' => 'Empty Body',
-                ]));
-
-                return $response
-                    ->withStatus(400)
-                    ->withBody($bodyResponse);
-            }
-        }
-        throw new Exception('http method não encontrado');
-    }
-
-    private function get(ParsedUri $parsedUri, ?string $body, ResponseInterface $response): ResponseInterface
-    {
-        $query = $this->database->from($parsedUri->currentEntity->name)->query();
-
-        if ($parsedUri->currentEntity->parent !== null) {
-            $query = $query
-                        ->whereParent(
-                            entityName: $parsedUri->currentEntity->parent->name,
-                            id: $parsedUri->currentEntity->parent->id
-                        );
-        }
-
-        if ($parsedUri->currentEntity->id === null) {
-            $data = $query->get();
-        } else {
-            $data = $query->find($parsedUri->currentEntity->id);
-            if ($data === null) {
-                throw new NotFoundEntityRepositoryException('entity not exists');
-            }
-        }
-
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
-
-        return $response->withBody($bodyResponse);
-    }
-
-    private function post(ParsedUri $parsedUri, ?string $body, ResponseInterface $response): ResponseInterface
-    {
-        $repository = $this->database->from($parsedUri->currentEntity->name);
-
-        $data = $this->bodyDecode($body);
-
-        $data = $this->includeParent($data, $parsedUri);
-
-        $data = $repository->save(data: $data);
-
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
-
-        return $response
-                ->withStatus(201)
-                ->withBody($bodyResponse);
-    }
-
-    private function put(ParsedUri $parsedUri, ?string $body, ResponseInterface $response): ResponseInterface
-    {
-        if ($parsedUri->currentEntity->id === null) {
-            throw new NotFoundEntityException('entity not found');
-        }
-        $repository = $this->database->from($parsedUri->currentEntity->name);
-
-        $entityData = $this->bodyDecode($body);
-
-        if ($parsedUri->currentEntity->parent !== null) {
-            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-            if (! array_key_exists($column, $entityData)) {
-                $entityData = $this->includeParent($entityData, $parsedUri);
-            }
-        }
-
         try {
-            $data = $repository->update(
-                $parsedUri->currentEntity->id,
-                $entityData
-            );
-            $statusCode = 200;
-        } catch (NotFoundEntityException $e) {
-            $statusCode = 201;
-            $data = $repository->save(json_decode($body, true));
+            $httpMethodHandler = $this->httpMethodHandler($request->getMethod());
+
+            return $httpMethodHandler->execute($request, $response, $parsedUri);
+        } catch (HttpException $e) {
+            $bodyResponse = $this->psr17Factory->createStream(json_encode([
+                'statusCode' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]));
+
+            return $response
+                ->withStatus($e->getCode())
+                ->withBody($bodyResponse);
         }
-
-        $bodyResponse = $this->psr17Factory->createStream(json_encode($data));
-
-        return $response
-            ->withStatus($statusCode)
-            ->withBody($bodyResponse);
     }
 
-    public function delete(ParsedUri $parsedUri, ?string $body, ResponseInterface $response): ResponseInterface
+    public function httpMethodHandler(string $httpMethod): HttpMethod
     {
-        if ($parsedUri->currentEntity->id === null) {
-            throw new NotFoundEntityException('entity not found');
-        }
+        $httpMehtodHandler = match (strtoupper($httpMethod)) {
+            'GET' => new Get($this),
+            'POST' => new Post($this),
+            'PUT' => new Put($this),
+            'DELETE' => new Delete($this),
+            default => throw new MethodNotAllowedException()
+        };
 
-        $repository = $this->database->from($parsedUri->currentEntity->name);
-
-        if ($parsedUri->currentEntity->parent !== null) {
-            $parentData = $this->database
-                ->from($parsedUri->currentEntity->parent->name)
-                   ->find($parsedUri->currentEntity->parent->id);
-
-            $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-            $parentIdFromEntity = $repository->find($parsedUri->currentEntity->id)[$column];
-
-            if ($parentData === null || $parentIdFromEntity !== $parsedUri->currentEntity->parent->id) {
-                throw new NotFoundEntityException('entity not found');
-            }
-        }
-
-        $repository->delete($parsedUri->currentEntity->id);
-
-        return $response->withStatus(204);
+        return $httpMehtodHandler;
     }
 
     public function send(ResponseInterface $response): void
@@ -200,42 +107,11 @@ class Server
         echo (string) $response->getBody();
     }
 
-    private function includeParent(array $data, ParsedUri $parsedUri): array
-    {
-        if ($parsedUri->currentEntity->parent === null) {
-            return $data;
-        }
-
-        $parentData = $this->database
-                            ->from($parsedUri->currentEntity->parent->name)
-                                ->find($parsedUri->currentEntity->parent->id);
-
-        if ($parentData === null) {
-            throw new NotFoundEntityException('entity not found');
-        }
-
-        $column = $this->inflector->singularize($parsedUri->currentEntity->parent->name).'_id';
-        $data[$column] = $parsedUri->currentEntity->parent->id;
-
-        return $data;
-    }
-
-    private function bodyDecode(?string $body): array
-    {
-        if ($body === null || $body === '') {
-            throw new EmptyBodyException();
-        }
-        $result = json_decode($body, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new EmptyBodyException();
-        }
-
-        return $result;
-    }
-
     public function addMiddleware(Middleware $middleware): self
     {
+        $middleware->setDatabase($this->database);
+        $middleware->setConfig($this->config);
+
         if ($this->middleware === null) {
             $this->middleware = $middleware;
 
@@ -246,5 +122,36 @@ class Server
         $this->middleware = $middleware;
 
         return $this;
+    }
+
+    private function loadConfig(array|string $config): void
+    {
+        if (is_array($config)) {
+            $this->config = $config;
+        }
+
+        $this->config = array_merge([
+            'database-file' => getcwd().'/db.json',
+        ], $this->config);
+    }
+
+    public function config(): array
+    {
+        return $this->config;
+    }
+
+    public function database(): Database
+    {
+        return $this->database;
+    }
+
+    public function inflector(): Inflector
+    {
+        return $this->inflector;
+    }
+
+    public function psr17Factory(): Psr17Factory
+    {
+        return $this->psr17Factory;
     }
 }

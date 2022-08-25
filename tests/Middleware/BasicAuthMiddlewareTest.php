@@ -3,9 +3,6 @@
 declare(strict_types=1);
 
 use JsonServer\Middlewares\BasicAuthMiddleware;
-use JsonServer\Middlewares\Handler;
-use Nyholm\Psr7\Factory\Psr17Factory;
-use Psr\Http\Message\RequestInterface;
 
 test('should return 401 if token not present', function () {
     $middleware = new BasicAuthMiddleware([
@@ -104,27 +101,3 @@ test('should read credentials from file', function () {
 
     expect($response->getStatusCode())->toBe(200);
 });
-
-function createRequest($url, $headers = []): RequestInterface
-{
-    $psr17Factory = new Psr17Factory();
-
-    $request = $psr17Factory->createRequest('GET', $psr17Factory->createUri($url));
-
-    foreach ($headers as $key => $value) {
-        $request = $request->withHeader($key, $value);
-    }
-
-    return $request;
-}
-
-function createHandler(): Handler
-{
-    $handler = new Handler(function () {
-        $psr17Factory = new Psr17Factory();
-
-        return $psr17Factory->createResponse();
-    });
-
-    return $handler;
-}

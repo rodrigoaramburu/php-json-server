@@ -10,12 +10,13 @@ if (! is_file($root_app.'/vendor/autoload.php')) {
 }
 
 require $root_app.'/vendor/autoload.php';
-$dataDir = $_ENV['DATA_DIR'] ?? '.';
 
-$server = new Server($dataDir.'/db.json');
+$server = new Server([
+    'database-file' => $_ENV['DATA_DIR'].'/database.json',
+]);
 
 if ($_ENV['USE_STATIC_ROUTE'] == 'true') {
-    $staticMiddeware = new StaticMiddleware($dataDir.'/static.json');
+    $staticMiddeware = new StaticMiddleware($_ENV['DATA_DIR'].'/static.json');
     $server->addMiddleware($staticMiddeware);
 }
 

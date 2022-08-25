@@ -15,11 +15,10 @@ beforeEach(function () {
 });
 
 test('should call execShell', function () {
-    $startCommand = new class extends DefaultController
-    {
+    $startCommand = new class () extends DefaultController {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
 
             return '';
         }
@@ -33,8 +32,7 @@ test('should call execShell', function () {
 })->expectOutputRegex('/Iniciando Servidor.../');
 
 test('should receive the json dir', function () {
-    $startCommand = new class extends DefaultController
-    {
+    $startCommand = new class () extends DefaultController {
         protected function execShellCommand(string $command): string
         {
             expect($command)->toBe('DATA_DIR=new-data USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
@@ -51,11 +49,10 @@ test('should receive the json dir', function () {
 })->expectOutputRegex('/Iniciando Servidor.../');
 
 test('should flag use of static middleware', function () {
-    $startCommand = new class extends DefaultController
-    {
+    $startCommand = new class () extends DefaultController {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=true php -S localhost:8000 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=true php -S localhost:8000 ./bin/build-in-server.php');
 
             return '';
         }
@@ -69,11 +66,10 @@ test('should flag use of static middleware', function () {
 })->expectOutputRegex('/Iniciando Servidor.../');
 
 test('should change the port', function () {
-    $startCommand = new class extends DefaultController
-    {
+    $startCommand = new class () extends DefaultController {
         protected function execShellCommand(string $command): string
         {
-            expect($command)->toBe('DATA_DIR=. USE_STATIC_ROUTE=false php -S localhost:4321 ./bin/build-in-server.php');
+            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:4321 ./bin/build-in-server.php');
 
             return '';
         }

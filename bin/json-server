@@ -2,6 +2,9 @@
 <?php
 
 use Minicli\App;
+use JsonServer\Utils\Reader;
+use JsonServer\Utils\Question;
+use Minicli\Exception\CommandNotFoundException;
 
 if (php_sapi_name() !== 'cli') {
     exit;
@@ -25,10 +28,24 @@ if (file_exists($vendorPath)) {
 $app = new App([
     'app_path' => $command_path
 ]);
+$app->addService('question', new Question());
+
 $argv[] = 'root_package='.$root_app;
 
 $app->setSignature('json-server help');
 
+try {
+    $app->runCommand($argv);
+} catch (CommandNotFoundException $notFoundException) {
+    $app->getPrinter()->error("Command Not Found.");
+    return 1;
+} catch (Exception $exception) {
+    if ($app->config->debug) {
+        $app->getPrinter()->error("An error occurred:");
+        $app->getPrinter()->error($exception->getMessage());
+    }
+    return 1;
+}
 
-$app->runCommand($argv);
+return 0;
 
