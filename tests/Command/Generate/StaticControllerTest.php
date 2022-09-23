@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use Minicli\App;
-use Pest\Mock\Mock;
-use JsonServer\Utils\Reader;
-use JsonServer\Utils\Question;
-use Minicli\Command\CommandCall;
 use JsonServer\Command\Generate\StaticController;
+use JsonServer\Utils\Question;
+use JsonServer\Utils\Reader;
+use Minicli\App;
+use Minicli\Command\CommandCall;
+use Pest\Mock\Mock;
 
 beforeEach(function () {
     $config = [
@@ -33,23 +33,21 @@ afterEach(function () {
     }
 });
 
-
-test("should generate static.json with values from param", function(){
-
+test('should generate static.json with values from param', function () {
     $filename = getcwd().'/static.json';
 
     $staticCommand = new StaticController();
     $staticCommand->boot($this->commandApp);
 
     $input = new CommandCall([
-        'json-server', 
-        'generate', 
-        'static', 
+        'json-server',
+        'generate',
+        'static',
         'path="/routes/static"',
-        'method="GET"',    
-        'body="body response"',    
-        'headers="header1|value1|header2|value2"',    
-        'statusCode="201"',    
+        'method="GET"',
+        'body="body response"',
+        'headers="header1=value1&header2=value2"',
+        'statusCode="201"',
     ]);
 
     $staticCommand->run($input);
@@ -58,44 +56,41 @@ test("should generate static.json with values from param", function(){
     expect($staticData)->toMatchArray(
         [
             '/routes/static' => [
-                "GET" => [
+                'GET' => [
                     'body' => 'body response',
                     'statusCode' => '201',
                     'headers' => [
                         'header1' => 'value1',
                         'header2' => 'value2',
                     ],
-                ]
-            ]
-        ]);
-
-
+                ],
+            ],
+        ]
+    );
 })->expectOutputRegex('/.*/');
 
-
-test('should ask values to generate static.json', function(){
-
+test('should ask values to generate static.json', function () {
     $filename = getcwd().'/static.json';
 
     $staticCommand = new StaticController();
     $staticCommand->boot($this->commandApp);
 
     $this->questionMock->shouldReceive('question')->andReturn(
-        '/routes/static', 
-        'GET', 
+        '/routes/static',
+        'GET',
         'body response',
-        '201', 
-        'header1', 
-        'value1', 
-        'header2', 
+        '201',
+        'header1',
+        'value1',
+        'header2',
         'value2',
-        '' 
+        ''
     );
-    
+
     $input = new CommandCall([
-        'json-server', 
-        'generate', 
-        'static', 
+        'json-server',
+        'generate',
+        'static',
     ]);
 
     $staticCommand->run($input);
@@ -104,36 +99,34 @@ test('should ask values to generate static.json', function(){
     expect($staticData)->toMatchArray(
         [
             '/routes/static' => [
-                "GET" => [
+                'GET' => [
                     'body' => 'body response',
                     'statusCode' => '201',
                     'headers' => [
                         'header1' => 'value1',
                         'header2' => 'value2',
                     ],
-                ]
-            ]
-        ]);
-
+                ],
+            ],
+        ]
+    );
 })->expectOutputRegex('/.*/');
 
-
-test("should generate static.json with empty header if param header empty", function(){
-
+test('should generate static.json with empty header if param header empty', function () {
     $filename = getcwd().'/static.json';
 
     $staticCommand = new StaticController();
     $staticCommand->boot($this->commandApp);
 
     $input = new CommandCall([
-        'json-server', 
-        'generate', 
-        'static', 
+        'json-server',
+        'generate',
+        'static',
         'path="/routes/static"',
-        'method="GET"',    
-        'body="body response"',    
-        'headers=""',    
-        'statusCode="201"',    
+        'method="GET"',
+        'body="body response"',
+        'headers=""',
+        'statusCode="201"',
     ]);
 
     $staticCommand->run($input);
@@ -142,13 +135,12 @@ test("should generate static.json with empty header if param header empty", func
     expect($staticData)->toMatchArray(
         [
             '/routes/static' => [
-                "GET" => [
+                'GET' => [
                     'body' => 'body response',
                     'statusCode' => '201',
                     'headers' => [],
-                ]
-            ]
-        ]);
-
-
+                ],
+            ],
+        ]
+    );
 })->expectOutputRegex('/.*/');

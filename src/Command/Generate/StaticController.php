@@ -16,15 +16,13 @@ class StaticController extends CommandController
         $staticFileName = $this->hasParam('filename') ? getcwd().'/'.$this->getParam('filename') : getcwd().'/static.json';
         $static = $this->loadFile($staticFileName);
 
-
         $static[$this->getPath()] = [
             $this->getMethod() => [
                 'body' => $this->getBody(),
                 'statusCode' => $this->getStatusCode(),
-                'headers' => $this->getHeaders()
-            ]
+                'headers' => $this->getHeaders(),
+            ],
         ];
-
 
         $this->writeFile($static);
         $this->getPrinter()->info("the data has write in {$this->filename}");
@@ -33,7 +31,7 @@ class StaticController extends CommandController
     public function getPath(): string
     {
         if ($this->hasParam('path')) {
-            return trim($this->getParam('path'),'"');
+            return trim($this->getParam('path'), '"');
         }
 
         $path = $this->getApp()->question->question('Path of the route:');
@@ -41,6 +39,7 @@ class StaticController extends CommandController
             $this->getPrinter()->error('path cannot by empty');
             exit;
         }
+
         return $path;
     }
 
@@ -51,6 +50,7 @@ class StaticController extends CommandController
         }
 
         $method = $this->getApp()->question->question('Method of the route:', 'GET');
+
         return $method;
     }
 
@@ -79,16 +79,13 @@ class StaticController extends CommandController
     public function getHeaders(): array
     {
         if ($this->hasParam('headers')) {
-            $headers = trim($this->getParam('headers'),'"');
-            if( empty($headers)){
+            $headersParam = trim($this->getParam('headers'), '"');
+            if (empty($headersParam)) {
                 return [];
             }
-            $headersExplode = explode('|', trim($this->getParam('headers') ,'"'));
 
-            $headers = [];
-            for($i = 0; $i< count($headersExplode); $i +=2) {
-                $headers[$headersExplode[$i]] = $headersExplode[$i+1];
-            }
+            parse_str($headersParam, $headers);
+
             return $headers;
         }
 

@@ -292,4 +292,4 @@ path=PATH              | path da rota
 method=METHOD          | método da rota
 body=BODY              | body da resposta
 statusCode=STATUS_CODE | código de esta http da resposta
-headers=HEADER-LIST    | lista de header da resposta. Informadado no formato headers="header1|valor-header1|header2|valor-header2"
+headers=HEADER-LIST    | lista de header da resposta. Informado no formato headers="header1=valor-header1&header2=valor-header2"

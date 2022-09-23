@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-use Minicli\App;
-use Pest\Mock\Mock;
-use JsonServer\Utils\Question;
-use Minicli\Command\CommandCall;
 use JsonServer\Command\Generate\ResourceController;
+use JsonServer\Utils\Question;
+use Minicli\App;
+use Minicli\Command\CommandCall;
+use Pest\Mock\Mock;
 
 beforeEach(function () {
     $config = [
@@ -177,18 +177,18 @@ test('should throw exception if faker function not exists', function () {
 test(
     'should throw exception if resource not present',
     function () {
-    $databaseCommand = new ResourceController();
-    $databaseCommand->boot($this->commandApp);
+        $databaseCommand = new ResourceController();
+        $databaseCommand->boot($this->commandApp);
 
-    $input = new CommandCall([
-        'json-server',
-        'generate',
-        'resource',
-        'fields=title.sentence',
-    ]);
+        $input = new CommandCall([
+            'json-server',
+            'generate',
+            'resource',
+            'fields=title.sentence',
+        ]);
 
-    $databaseCommand->run($input);
-}
+        $databaseCommand->run($input);
+    }
 )->throws(InvalidArgumentException::class, 'resource name is missing')
 ->expectOutputRegex('/.*/');
 
@@ -248,7 +248,6 @@ test('should generate resource with id with next value', function () {
     expect($data['posts'])->toHaveCount(2);
     expect($data['posts'][1]['id'])->toBe(2);
 })->expectOutputRegex('/.*/');
-
 
 test('should enter interact fields if param field not pass', function () {
     $filename = 'database.json';

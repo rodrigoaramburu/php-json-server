@@ -35,7 +35,7 @@ class ResourceController extends CommandController
         }
         $this->database[$resourceName] = $this->database[$resourceName] ?? [];
 
-        $fields = !$this->hasFlag('--it-fields') && $this->hasParam('fields')
+        $fields = ! $this->hasFlag('--it-fields') && $this->hasParam('fields')
                         ? $this->fieldsFromParam()
                         : $this->fieldsFromPrompt($resourceName);
 
@@ -124,8 +124,8 @@ class ResourceController extends CommandController
             $this->getPrinter()->newline();
         }
 
-        $confirm = $this->getApp()->question->confirmation("Do you confirm generation? ", true, '/^(y|s)/i', ['y','n']);
-        if (!$confirm) {
+        $confirm = $this->getApp()->question->confirmation('Do you confirm generation? ', true, '/^(y|s)/i', ['y', 'n']);
+        if (! $confirm) {
             $this->getPrinter()->error('Command aborted', true);
             exit;
         }

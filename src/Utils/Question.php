@@ -10,7 +10,9 @@ use Minicli\ServiceInterface;
 class Question implements ServiceInterface
 {
     private App $app;
+
     private $in;
+
     private string $highlightStyle = 'success';
 
     public function __construct(string $stream = 'php://stdin')
@@ -36,24 +38,23 @@ class Question implements ServiceInterface
     public function question(string $message, string $default = ''): string
     {
         $defaultColorized = $this->app->getPrinter()->filterOutput($default, $this->highlightStyle);
-        $defaultMessage = $default == '' ? '' : "[$defaultColorized] " ;
-        $this->app->getPrinter()->rawOutput($message . ' ' . $defaultMessage);
+        $defaultMessage = $default == '' ? '' : "[$defaultColorized] ";
+        $this->app->getPrinter()->rawOutput($message.' '.$defaultMessage);
         $input = rtrim(fgets($this->in), "\n");
 
         return ! empty($input) ? $input : $default;
     }
 
-
     public function confirmation(string $message, bool $default, $trueAnswerRegex = '/^(y|s)/i', array $yesNoMessage = []): bool
     {
-        if (!empty($yesNoMessage)) {
+        if (! empty($yesNoMessage)) {
             $yes = $default == true ? $this->app->getPrinter()->filterOutput($yesNoMessage[0], $this->highlightStyle) : $yesNoMessage[0];
             $no = $default == false ? $this->app->getPrinter()->filterOutput($yesNoMessage[1], $this->highlightStyle) : $yesNoMessage[1];
 
-            $defaultMessage =  "[$yes/$no] " ;
+            $defaultMessage = "[$yes/$no] ";
         }
 
-        $this->app->getPrinter()->rawOutput($message .  ' ' . ($defaultMessage ?? ''));
+        $this->app->getPrinter()->rawOutput($message.' '.($defaultMessage ?? ''));
         $input = rtrim(fgets($this->in), "\n");
         if (empty($input)) {
             return $default;
@@ -69,9 +70,8 @@ class Question implements ServiceInterface
             $this->app->getPrinter()->rawOutput("$num $option\n");
         }
 
-
         $defaultOptionColorized = $this->app->getPrinter()->filterOutput(strval($i), $this->highlightStyle);
-        $this->app->getPrinter()->rawOutput($message . " [$defaultOptionColorized] ");
+        $this->app->getPrinter()->rawOutput($message." [$defaultOptionColorized] ");
         $input = rtrim(fgets($this->in), "\n");
         if ($input === '') {
             return $options[$default];
@@ -81,6 +81,7 @@ class Question implements ServiceInterface
             return $options[$input];
         } else {
             $this->app->getPrinter()->error('invalid option');
+
             return false;
         }
     }
@@ -97,7 +98,7 @@ class Question implements ServiceInterface
         }, $default);
         $defaultOptionColorized = implode(', ', $defaultOptionColorized);
 
-        $this->app->getPrinter()->rawOutput($message . " [$defaultOptionColorized] ");
+        $this->app->getPrinter()->rawOutput($message." [$defaultOptionColorized] ");
         $input = rtrim(fgets($this->in), "\n");
 
         if ($input === '') {
@@ -107,7 +108,8 @@ class Question implements ServiceInterface
         $inputOptions = explode(',', $input);
         $diff = array_diff($inputOptions, array_keys($options));
         if ($diff) {
-            $this->app->getPrinter()->error('invalid options: '. implode(',', $diff));
+            $this->app->getPrinter()->error('invalid options: '.implode(',', $diff));
+
             return false;
         }
 

@@ -262,8 +262,7 @@ test('should load config from array', function () {
     ]);
 });
 
-
-test('should add cors header', function(){
+test('should add cors header', function () {
     $server = new Server([
         'database-file' => __DIR__.'/fixture/db-posts.json',
     ]);
@@ -273,5 +272,4 @@ test('should add cors header', function(){
     expect($response->getHeader('Access-Control-Allow-Origin')[0])->toBe('*');
     expect($response->getHeader('Access-Control-Allow-Headers')[0])->toBe('*');
     expect($response->getHeader('Access-Control-Allow-Methods')[0])->toBe('GET, POST, PUT, DELETE, OPTIONS');
-
 });
