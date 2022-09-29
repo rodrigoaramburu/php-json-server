@@ -275,7 +275,7 @@ Parâmetros           | Descrição
 ---------------------| --------------------
 filename=FILENAME    | especifica o nome do arquivo que será gravado os dados
 num=NUM_OF_RESOURCES | especifica o número de _resources_ a serem criados             
-fields=FIELDS_LIST   | lista de campos a serem criados no _resource_. Deve ser informado no formato. _'field.type;field.type; ...'_. O _type_ deve ser um método do lib [Faker](https://fakerphp.github.io/), com seus parâmetros(se houver) passados separados por ponto após o nome do método. Ex.: `idade.numberBetween.20.70`
+fields=FIELDS_LIST   | lista de campos a serem criados no _resource_. Deve ser informado no formato. 'field=type&field=type& ...'_. O _type_ deve ser um método do lib [Faker](https://fakerphp.github.io/), com seus parâmetros(se houver) passados separados por ponto após o nome do método. Ex.: `idade=numberBetween.20.70`
 
 ### Gerando rotas estáticas
 

@@ -25,7 +25,7 @@ class StaticController extends CommandController
         ];
 
         $this->writeFile($static);
-        $this->getPrinter()->info("the data has write in {$this->filename}");
+        $this->getPrinter()->out("the data has write in <success>{$this->filename}</success>");
     }
 
     public function getPath(): string
@@ -99,8 +99,7 @@ class StaticController extends CommandController
             if (empty($headerName)) {
                 break;
             }
-            $fieldHighlight = $this->getPrinter()->filterOutput($headerName, 'info');
-            $value = $this->getApp()->question->question("Header $fieldHighlight value:");
+            $value = $this->getApp()->question->question("Header <info>$headerName</info> value:");
             $this->getPrinter()->newLine();
 
             $headers[$headerName] = $value;

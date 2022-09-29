@@ -24,21 +24,15 @@ class DatabaseController extends CommandController
 
         $this->writeFile($database);
 
-        $this->getPrinter()->newline();
-        $this->getPrinter()->out('File created: ');
-        $this->getPrinter()->out($databaseFileName, 'success');
-        $this->getPrinter()->newline();
-        $this->getPrinter()->out('with resources: ');
-        $this->getPrinter()->newline();
+        $this->getPrinter()->display("File created: <success>{$databaseFileName}</success>");
+        $this->getPrinter()->display('with resources: ');
         foreach ($resourcesNames as $value) {
-            $this->getPrinter()->out("\t".$value, 'success');
+            $this->getPrinter()->out("\t<success>$value</success>");
             $this->getPrinter()->newline();
         }
-        $this->getPrinter()->newline();
-        $this->getPrinter()->out('with relations: ');
-        $this->getPrinter()->newline();
+        $this->getPrinter()->display('with relations: ');
         foreach ($database['embed-resources'] as $key => $value) {
-            $this->getPrinter()->out("\t".$key.' = '.implode(', ', $value), 'success');
+            $this->getPrinter()->out("\t<success>$key = ".implode(', ', $value) . "</success>");
             $this->getPrinter()->newline();
         }
 

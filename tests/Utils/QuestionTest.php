@@ -1,13 +1,16 @@
 <?php
 
-use JsonServer\Utils\Question;
 use Minicli\App;
+use JsonServer\Utils\Question;
+use JsonServer\Utils\TagFilter;
 
 function getQuestionService()
 {
     $app = new App([
         'app_path' => __DIR__.'/../../src/Command/',
     ]);
+
+    $app->getPrinter()->registerFilter(new TagFilter());
 
     $questionService = new Question('php://memory');
     $questionService->load($app);
@@ -29,7 +32,7 @@ it('asserts that question outputs expected text and return', function () {
     $expected = $questionService->question('question minicli');
 
     expect($expected)->toBe('answer1');
-})->expectOutputString('question minicli ');
+})->expectOutputString("\e[1;37mquestion minicli \e[0m");
 
 it('asserts that question outputs expected text with default value return that', function () {
     $questionService = getQuestionService();
@@ -38,7 +41,7 @@ it('asserts that question outputs expected text with default value return that',
     $expected = $questionService->question('question minicli', 'my-default');
 
     expect($expected)->toBe('my-default');
-})->expectOutputString("question minicli [\e[0;32mmy-default\e[0m] ");
+})->expectOutputString("\e[1;37mquestion minicli [\e[0;32mmy-default\e[1;37m] \e[0m");
 
 it('asserts that confirmation outputs expected text and return true if yes', function () {
     $questionService = getQuestionService();
@@ -47,7 +50,7 @@ it('asserts that confirmation outputs expected text and return true if yes', fun
     $expected = $questionService->confirmation('confirm?', false);
 
     expect($expected)->toBeTrue();
-})->expectOutputString('confirm? ');
+})->expectOutputString("\e[1;37mconfirm? \e[0m");
 
 it('asserts that confirmation false if no', function () {
     $questionService = getQuestionService();
@@ -56,7 +59,7 @@ it('asserts that confirmation false if no', function () {
     $expected = $questionService->confirmation('confirm?', false);
 
     expect($expected)->toBeFalse();
-})->expectOutputString('confirm? ');
+})->expectOutputString("\e[1;37mconfirm? \e[0m");
 
 it('asserts that confirmation return default', function () {
     $questionService = getQuestionService();
@@ -65,7 +68,7 @@ it('asserts that confirmation return default', function () {
     $expected = $questionService->confirmation('confirm?', false);
 
     expect($expected)->toBeFalse();
-})->expectOutputString('confirm? ');
+})->expectOutputString("\e[1;37mconfirm? \e[0m");
 
 it('asserts that confirmation receive regex for default value', function () {
     $questionService = getQuestionService();
@@ -74,7 +77,7 @@ it('asserts that confirmation receive regex for default value', function () {
     $expected = $questionService->confirmation('confirm?', false, '/^ok/i');
 
     expect($expected)->toBeTrue();
-})->expectOutputString('confirm? ');
+})->expectOutputString("\e[1;37mconfirm? \e[0m");
 
 it('asserts that confirmation outputs with default value message', function () {
     $questionService = getQuestionService();
@@ -83,7 +86,7 @@ it('asserts that confirmation outputs with default value message', function () {
     $expected = $questionService->confirmation('confirm?', true, '/^s/i', ['s', 'n']);
 
     expect($expected)->toBeTrue();
-})->expectOutputString("confirm? [\e[0;32ms\e[0m/n] ");
+})->expectOutputString("\e[1;37mconfirm? [\e[0;32ms\e[1;37m/n] \e[0m");
 
 it('asserts that choice output the options and return the option', function () {
     $questionService = getQuestionService();
@@ -94,10 +97,10 @@ it('asserts that choice output the options and return the option', function () {
     expect($expected)->toBe('option 2');
 })->expectOutputString(
     <<<"CHOICE"
-    \e[0;32m[0]\e[0m option 1
-    \e[0;32m[1]\e[0m option 2
-    \e[0;32m[2]\e[0m option 3
-    choose wisely! [\e[0;32m2\e[0m] 
+    \e[1;37m\e[0;32m[0]\e[1;37m option 1\e[0m
+    \e[1;37m\e[0;32m[1]\e[1;37m option 2\e[0m
+    \e[1;37m\e[0;32m[2]\e[1;37m option 3\e[0m
+    \e[1;37mchoose wisely! \e[0;32m[2]\e[1;37m \e[0m
     CHOICE
 );
 
@@ -128,10 +131,10 @@ it('asserts that multiChoice output the options and return the option', function
     expect($expected)->toMatchArray(['option 3', 'option 2']);
 })->expectOutputString(
     <<<"CHOICE"
-    \e[0;32m[0]\e[0m option 1
-    \e[0;32m[1]\e[0m option 2
-    \e[0;32m[2]\e[0m option 3
-    choose wisely! [\e[0;32m0\e[0m, \e[0;32m1\e[0m] 
+    \e[1;37m\e[0;32m[0]\e[1;37m option 1\e[0m
+    \e[1;37m\e[0;32m[1]\e[1;37m option 2\e[0m
+    \e[1;37m\e[0;32m[2]\e[1;37m option 3\e[0m
+    \e[1;37mchoose wisely! [\e[0;32m0\e[1;37m, \e[0;32m1\e[1;37m] \e[0m
     CHOICE
 );
 

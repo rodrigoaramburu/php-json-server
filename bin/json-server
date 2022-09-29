@@ -4,6 +4,7 @@
 use Minicli\App;
 use JsonServer\Utils\Reader;
 use JsonServer\Utils\Question;
+use JsonServer\Utils\TagFilter;
 use Minicli\Exception\CommandNotFoundException;
 
 if (php_sapi_name() !== 'cli') {
@@ -29,6 +30,7 @@ $app = new App([
     'app_path' => $command_path
 ]);
 $app->addService('question', new Question());
+$app->getPrinter()->registerFilter(new TagFilter());
 
 $argv[] = 'root_package='.$root_app;
 

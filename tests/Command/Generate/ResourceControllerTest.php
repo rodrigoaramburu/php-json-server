@@ -15,9 +15,9 @@ beforeEach(function () {
 
     $this->commandApp = new App($config);
     /** Reader|Mock */
-    $this->inputMock = Mockery::mock(Question::class);
-    $this->inputMock->shouldReceive('load');
-    $this->commandApp->addService('question', $this->inputMock);
+    $this->questionMock = Mockery::mock(Question::class);
+    $this->questionMock->shouldReceive('load');
+    $this->commandApp->addService('question', $this->questionMock);
     chdir(__DIR__.'/../../tmp/');
 });
 
@@ -42,10 +42,18 @@ test('should generate resource with title and author inside database file', func
     $fakerMock->shouldReceive('sentence')->andReturn('the title');
     $fakerMock->shouldReceive('name')->andReturn('the author');
 
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
+
     $databaseCommand = new ResourceController($fakerMock);
     $databaseCommand->boot($this->commandApp);
 
-    $input = new CommandCall(['json-server', 'generate', 'resource', 'posts', 'fields=title.sentence;author.name']);
+    $input = new CommandCall([
+        'json-server',
+        'generate',
+        'resource',
+        'posts',
+        'fields="title=sentence&author=name"'
+    ]);
 
     $databaseCommand->run($input);
 
@@ -59,11 +67,20 @@ test('should generate resource with title and author inside database file', func
 test('should generate n resources by param', function () {
     $filename = getcwd().'/database.json';
 
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
+
     $databaseCommand = new ResourceController();
 
     $databaseCommand->boot($this->commandApp);
 
-    $input = new CommandCall(['json-server', 'generate', 'resource', 'posts', 'num=5', 'fields="title.sentence;author.name']);
+    $input = new CommandCall([
+        'json-server',
+        'generate',
+        'resource',
+        'posts',
+        'num=5',
+        'fields="title=sentence&author=name'
+    ]);
 
     $databaseCommand->run($input);
 
@@ -78,6 +95,8 @@ test('should generate n resources by param', function () {
 test('should generate resource in specified database file', function () {
     $filename = 'data/database.json';
 
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
+
     $databaseCommand = new ResourceController();
     $databaseCommand->boot($this->commandApp);
 
@@ -87,7 +106,7 @@ test('should generate resource in specified database file', function () {
         'resource',
         'posts',
         'filename=data/database.json',
-        'fields="title.sentence;author.name"',
+        'fields="title=sentence&author=name"',
     ]);
 
     $databaseCommand->run($input);
@@ -110,6 +129,8 @@ test('should add into resources if database already has resources', function () 
     $fakerMock->shouldReceive('sentence')->andReturn('new title');
     $fakerMock->shouldReceive('name')->andReturn('new author');
 
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
+
     $databaseCommand = new ResourceController($fakerMock);
     $databaseCommand->boot($this->commandApp);
 
@@ -118,7 +139,7 @@ test('should add into resources if database already has resources', function () 
         'generate',
         'resource',
         'posts',
-        'fields="title.sentence;author.name"',
+        'fields="title=sentence&author=name"',
     ]);
 
     $databaseCommand->run($input);
@@ -137,6 +158,7 @@ test('should call faker function with params', function () {
     $fakerMock = mock(\Faker\Generator::class);
 
     $fakerMock->shouldReceive('numberBetween')->with(100, 200)->andReturn(150);
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
 
     $databaseCommand = new ResourceController($fakerMock);
     $databaseCommand->boot($this->commandApp);
@@ -146,7 +168,7 @@ test('should call faker function with params', function () {
         'generate',
         'resource',
         'posts',
-        'fields=number.numberBetween.100.200',
+        'fields=number=numberBetween.100.200',
     ]);
 
     $databaseCommand->run($input);
@@ -166,7 +188,7 @@ test('should throw exception if faker function not exists', function () {
         'generate',
         'resource',
         'posts',
-        'fields=number.missingFunction',
+        'fields=number=missingFunction',
     ]);
 
     $databaseCommand->run($input);
@@ -184,7 +206,7 @@ test(
             'json-server',
             'generate',
             'resource',
-            'fields=title.sentence',
+            'fields=title=sentence',
         ]);
 
         $databaseCommand->run($input);
@@ -201,8 +223,8 @@ test('should receive fields by interact mode', function () {
     $fakerMock->shouldReceive('sentence')->andReturn('the title');
     $fakerMock->shouldReceive('name')->andReturn('the author');
 
-    $this->inputMock->shouldReceive('question')->andReturn('title', 'sentence', 'author', 'name', '', 'yes');
-    $this->inputMock->shouldReceive('confirmation')->andReturn('yes');
+    $this->questionMock->shouldReceive('question')->andReturn('title', 'sentence', 'author', 'name', '', 'yes');
+    $this->questionMock->shouldReceive('confirmation')->andReturn('yes');
 
     $databaseCommand = new ResourceController(faker: $fakerMock);
     $databaseCommand->boot($this->commandApp);
@@ -230,6 +252,8 @@ test('should generate resource with id with next value', function () {
 
     file_put_contents(getcwd().'/'.$filename, '{"posts": [{"id": 1, "title": "the title"}]}');
 
+    $this->questionMock->shouldReceive('confirmation')->andReturn(true);
+
     $databaseCommand = new ResourceController();
     $databaseCommand->boot($this->commandApp);
 
@@ -238,7 +262,7 @@ test('should generate resource with id with next value', function () {
         'generate',
         'resource',
         'posts',
-        'fields="id.id;title.sentence"',
+        'fields="id=id&title=sentence"',
     ]);
 
     $databaseCommand->run($input);
@@ -258,8 +282,8 @@ test('should enter interact fields if param field not pass', function () {
     $fakerMock->shouldReceive('sentence')->andReturn('the title');
     $fakerMock->shouldReceive('name')->andReturn('the author');
 
-    $this->inputMock->shouldReceive('question')->andReturn('title', 'sentence', 'author', 'name', '', 'yes');
-    $this->inputMock->shouldReceive('confirmation')->andReturn('yes');
+    $this->questionMock->shouldReceive('question')->andReturn('title', 'sentence', 'author', 'name', '', 'yes');
+    $this->questionMock->shouldReceive('confirmation')->andReturn('yes');
 
     $databaseCommand = new ResourceController(faker: $fakerMock);
     $databaseCommand->boot($this->commandApp);

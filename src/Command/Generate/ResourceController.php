@@ -46,7 +46,7 @@ class ResourceController extends CommandController
         $this->confirmWrite($resourceName, $num, $fields);
 
         $this->writeFile($database);
-        $this->getPrinter()->info("the data has write in {$this->filename}");
+        $this->getPrinter()->display("the data has write in <success>{$this->filename}</success>");
     }
 
     private function generateResource(array $fieldOptions, string $resourceName, array $database): array
@@ -75,21 +75,15 @@ class ResourceController extends CommandController
 
     private function fieldsFromParam(): array
     {
-        $fieldsData = $this->getParam('fields');
+        $fieldsData = trim($this->getParam('fields'), '"');
 
-        $tmp = explode(';', trim($fieldsData, '"'));
-        $fields = [];
-        foreach ($tmp as $p) {
-            $tmp2 = explode('.', $p);
-            $fields[$tmp2[0]] = str_replace($tmp2[0].'.', '', $p);
-        }
-
+        parse_str($fieldsData, $fields);
         return $fields;
     }
 
     private function fieldsFromPrompt(string $resourceName): array
     {
-        $this->getPrinter()->info("inform the fields of resource the \"$resourceName\".");
+        $this->getPrinter()->display("inform the fields of resource <info>\"$resourceName\"</info>.");
         $this->getPrinter()->info('Empty name will end.', true);
         $this->getPrinter()->newline();
         $fields = [];
@@ -101,8 +95,8 @@ class ResourceController extends CommandController
             if (empty($field)) {
                 break;
             }
-            $fieldHighlight = $this->getPrinter()->filterOutput($field, 'info');
-            $type = $this->getApp()->question->question("Type of field $fieldHighlight:", 'text');
+
+            $type = $this->getApp()->question->question("Type of field <info>$field</info>:", 'text');
             $this->getPrinter()->newLine();
 
             $fields[$field] = $type;
@@ -113,14 +107,11 @@ class ResourceController extends CommandController
 
     private function confirmWrite(string $resource, int $num, array $fields): void
     {
-        if (! $this->hasFlag('--it-fields')) {
-            return;
-        }
-        $this->getPrinter()->display("Resource: $resource");
-        $this->getPrinter()->display("Number of resources: $num");
+        $this->getPrinter()->display("Resource: <success>$resource</success>");
+        $this->getPrinter()->display("Number of resources: <success>$num</success>");
         $this->getPrinter()->display('Fields: ');
         foreach ($fields as $key => $value) {
-            $this->getPrinter()->out($key."\t => \t".$value);
+            $this->getPrinter()->out("<success>$key</success> \t => \t <success>$value</success>");
             $this->getPrinter()->newline();
         }
 

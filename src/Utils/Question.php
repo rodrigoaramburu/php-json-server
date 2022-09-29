@@ -37,9 +37,8 @@ class Question implements ServiceInterface
 
     public function question(string $message, string $default = ''): string
     {
-        $defaultColorized = $this->app->getPrinter()->filterOutput($default, $this->highlightStyle);
-        $defaultMessage = $default == '' ? '' : "[$defaultColorized] ";
-        $this->app->getPrinter()->rawOutput($message.' '.$defaultMessage);
+        $defaultMessage = $default == '' ? '' : "[<{$this->highlightStyle}>$default</{$this->highlightStyle}>] ";
+        $this->app->getPrinter()->out($message.' '.$defaultMessage);
         $input = rtrim(fgets($this->in), "\n");
 
         return ! empty($input) ? $input : $default;
@@ -48,13 +47,13 @@ class Question implements ServiceInterface
     public function confirmation(string $message, bool $default, $trueAnswerRegex = '/^(y|s)/i', array $yesNoMessage = []): bool
     {
         if (! empty($yesNoMessage)) {
-            $yes = $default == true ? $this->app->getPrinter()->filterOutput($yesNoMessage[0], $this->highlightStyle) : $yesNoMessage[0];
-            $no = $default == false ? $this->app->getPrinter()->filterOutput($yesNoMessage[1], $this->highlightStyle) : $yesNoMessage[1];
+            $yes = $default == true ? "<{$this->highlightStyle}>$yesNoMessage[0]</{$this->highlightStyle}>" : $yesNoMessage[0];
+            $no = $default == false ? "<{$this->highlightStyle}>$yesNoMessage[1]</{$this->highlightStyle}>" : $yesNoMessage[1];
 
             $defaultMessage = "[$yes/$no] ";
         }
 
-        $this->app->getPrinter()->rawOutput($message.' '.($defaultMessage ?? ''));
+        $this->app->getPrinter()->out($message.' '.($defaultMessage ?? ''));
         $input = rtrim(fgets($this->in), "\n");
         if (empty($input)) {
             return $default;
@@ -66,12 +65,11 @@ class Question implements ServiceInterface
     public function choice(string $message, array $options, int $default): string|false
     {
         foreach ($options as $i => $option) {
-            $num = $this->app->getPrinter()->filterOutput("[$i]", $this->highlightStyle);
-            $this->app->getPrinter()->rawOutput("$num $option\n");
+            $this->app->getPrinter()->out("<{$this->highlightStyle}>[$i]</{$this->highlightStyle}> $option");
+            $this->app->getPrinter()->newline();
         }
 
-        $defaultOptionColorized = $this->app->getPrinter()->filterOutput(strval($i), $this->highlightStyle);
-        $this->app->getPrinter()->rawOutput($message." [$defaultOptionColorized] ");
+        $this->app->getPrinter()->out($message." <{$this->highlightStyle}>[$i]</{$this->highlightStyle}> ");
         $input = rtrim(fgets($this->in), "\n");
         if ($input === '') {
             return $options[$default];
@@ -89,16 +87,16 @@ class Question implements ServiceInterface
     public function multiChoice(string $message, array $options, array $default): array|false
     {
         foreach ($options as $i => $option) {
-            $num = $this->app->getPrinter()->filterOutput("[$i]", $this->highlightStyle);
-            $this->app->getPrinter()->rawOutput("$num $option\n");
+            $this->app->getPrinter()->out("<{$this->highlightStyle}>[$i]</{$this->highlightStyle}> $option");
+            $this->app->getPrinter()->newline();
         }
 
         $defaultOptionColorized = array_map(function ($op) {
-            return $this->app->getPrinter()->filterOutput(strval($op), $this->highlightStyle);
+            return "<{$this->highlightStyle}>{$op}</{$this->highlightStyle}>";
         }, $default);
         $defaultOptionColorized = implode(', ', $defaultOptionColorized);
 
-        $this->app->getPrinter()->rawOutput($message." [$defaultOptionColorized] ");
+        $this->app->getPrinter()->out($message." [$defaultOptionColorized] ");
         $input = rtrim(fgets($this->in), "\n");
 
         if ($input === '') {
