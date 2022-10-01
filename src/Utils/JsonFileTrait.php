@@ -31,7 +31,7 @@ trait JsonFileTrait
     {
         ftruncate($this->fileDb, 0);
         rewind($this->fileDb);
-        fwrite($this->fileDb, json_encode($data, JSON_PRETTY_PRINT));
+        fwrite($this->fileDb, json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
     }
 
     public function __destruct()
