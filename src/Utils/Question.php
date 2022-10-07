@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JsonServer\Utils;
 
 use Minicli\App;
+use Minicli\Input;
 use Minicli\ServiceInterface;
 
 class Question implements ServiceInterface
@@ -15,9 +16,9 @@ class Question implements ServiceInterface
 
     private string $highlightStyle = 'success';
 
-    public function __construct(string $stream = 'php://stdin')
+    public function __construct()
     {
-        $this->in = fopen($stream, 'r+');
+        $this->input = new Input('> ');        
     }
 
     public function load(App $app): void
@@ -25,9 +26,9 @@ class Question implements ServiceInterface
         $this->app = $app;
     }
 
-    public function getIn()
+    public function changeInput(Input $input)
     {
-        return $this->in;
+        $this->input = $input;
     }
 
     public function setHighlightStyle(string $highlightStyle): void
@@ -39,9 +40,10 @@ class Question implements ServiceInterface
     {
         $defaultMessage = $default == '' ? '' : "[<{$this->highlightStyle}>$default</{$this->highlightStyle}>] ";
         $this->app->getPrinter()->out($message.' '.$defaultMessage);
-        $input = rtrim(fgets($this->in), "\n");
+        $this->app->getPrinter()->newline();
+        $answer = $this->input->read();
 
-        return ! empty($input) ? $input : $default;
+        return ! empty($answer) ? $answer : $default;
     }
 
     public function confirmation(string $message, bool $default, $trueAnswerRegex = '/^(y|s)/i', array $yesNoMessage = []): bool
@@ -54,12 +56,13 @@ class Question implements ServiceInterface
         }
 
         $this->app->getPrinter()->out($message.' '.($defaultMessage ?? ''));
-        $input = rtrim(fgets($this->in), "\n");
-        if (empty($input)) {
+        $this->app->getPrinter()->newline();
+        $answer = $this->input->read();
+        if (empty($answer)) {
             return $default;
         }
 
-        return (bool) preg_match($trueAnswerRegex, $input);
+        return (bool) preg_match($trueAnswerRegex, $answer);
     }
 
     public function choice(string $message, array $options, int $default): string|false
@@ -70,13 +73,14 @@ class Question implements ServiceInterface
         }
 
         $this->app->getPrinter()->out($message." <{$this->highlightStyle}>[$i]</{$this->highlightStyle}> ");
-        $input = rtrim(fgets($this->in), "\n");
-        if ($input === '') {
+        $this->app->getPrinter()->newline();
+        $answer = $this->input->read();
+        if ($answer === '') {
             return $options[$default];
         }
 
-        if (array_key_exists($input, $options)) {
-            return $options[$input];
+        if (array_key_exists($answer, $options)) {
+            return $options[$answer];
         } else {
             $this->app->getPrinter()->error('invalid option');
 
@@ -97,13 +101,14 @@ class Question implements ServiceInterface
         $defaultOptionColorized = implode(', ', $defaultOptionColorized);
 
         $this->app->getPrinter()->out($message." [$defaultOptionColorized] ");
-        $input = rtrim(fgets($this->in), "\n");
+        $this->app->getPrinter()->newline();
+        $answer = $this->input->read();
 
-        if ($input === '') {
+        if ($answer === '') {
             return array_map(fn ($op) => $options[$op], $default);
         }
 
-        $inputOptions = explode(',', $input);
+        $inputOptions = explode(',', $answer);
         $diff = array_diff($inputOptions, array_keys($options));
         if ($diff) {
             $this->app->getPrinter()->error('invalid options: '.implode(',', $diff));
