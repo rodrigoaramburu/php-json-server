@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use JsonServer\Command\Start\DefaultController;
+use JsonServer\Utils\TagFilter;
 use Minicli\App;
 use Minicli\Command\CommandCall;
 
@@ -12,15 +13,14 @@ beforeEach(function () {
     ];
 
     $this->commandApp = new App($config);
+    $this->commandApp->getPrinter()->registerFilter(new TagFilter());
 });
 
 test('should call execShell', function () {
     $startCommand = new class () extends DefaultController {
-        protected function execShellCommand(string $command): string
+        protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
         {
-            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
-
-            return '';
+            expect($command)->toBe('php -S localhost:8000 cliserver.php');
         }
     };
 
@@ -33,11 +33,13 @@ test('should call execShell', function () {
 
 test('should receive the json dir', function () {
     $startCommand = new class () extends DefaultController {
-        protected function execShellCommand(string $command): string
+        protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
         {
-            expect($command)->toBe('DATA_DIR=new-data USE_STATIC_ROUTE=false php -S localhost:8000 ./bin/build-in-server.php');
-
-            return '';
+            expect($command)->toBe('php -S localhost:8000 cliserver.php');
+            expect($env)->toBe([
+                'DATA_DIR' => 'new-data',
+                'USE_STATIC_ROUTE' => 'false'
+            ]);
         }
     };
 
@@ -50,11 +52,12 @@ test('should receive the json dir', function () {
 
 test('should flag use of static middleware', function () {
     $startCommand = new class () extends DefaultController {
-        protected function execShellCommand(string $command): string
+        protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
         {
-            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=true php -S localhost:8000 ./bin/build-in-server.php');
-
-            return '';
+            expect($command)->toBe('php -S localhost:8000 cliserver.php');
+            expect($env)->toMatchArray([
+                'USE_STATIC_ROUTE' => 'true'
+            ]);
         }
     };
 
@@ -67,11 +70,9 @@ test('should flag use of static middleware', function () {
 
 test('should change the port', function () {
     $startCommand = new class () extends DefaultController {
-        protected function execShellCommand(string $command): string
+        protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
         {
-            expect($command)->toBe('DATA_DIR='.getcwd().' USE_STATIC_ROUTE=false php -S localhost:4321 ./bin/build-in-server.php');
-
-            return '';
+            expect($command)->toBe('php -S localhost:4321 cliserver.php');
         }
     };
 
@@ -81,3 +82,36 @@ test('should change the port', function () {
 
     $startCommand->run($input);
 })->expectOutputRegex('/Iniciando Servidor.../');
+
+
+test('should process build-in server output', function () {
+    $startCommand = new class () extends DefaultController {
+        protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
+        {
+            parent::processOutput('[Mon Oct 10 14:06:18 2022] 127.0.0.1:53144 [200]: GET /teste.php');
+        }
+    };
+
+    $startCommand->boot($this->commandApp);
+
+    $input = new CommandCall(['json-server', 'start', 'root_package=.']);
+
+    ob_start();
+    $startCommand->run($input);
+    $content = ob_get_clean();
+
+    expect($content)->toContain("2022-10-10 14:06:18 " . s('alt'). "GET" .s('default') . " " . s('success') . '200' . s('default') . " - /teste.php");
+});
+
+test('should execute shell command', function () {
+    $startCommand = new class () extends DefaultController {
+        public function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandler): void
+        {
+            parent::execShellCommand($command, $env, null, $outputHandler);
+        }
+    };
+
+    $startCommand->execShellCommand("echo 'teste'", [], null, function ($pipes) {
+        expect(fgets($pipes[1]))->toBe("teste\n");
+    });
+});

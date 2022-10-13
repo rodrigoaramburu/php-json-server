@@ -80,7 +80,7 @@ class TagFilter implements OutputFilterInterface
 
             $message = preg_replace(
                 '/<'.$output_array[1].'>/U',
-                "\e[".implode(';', $styleColor).'m',
+                "\e[0m\e[".implode(';', $styleColor).'m',
                 $message,
                 1
             );

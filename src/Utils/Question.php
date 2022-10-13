@@ -18,7 +18,7 @@ class Question implements ServiceInterface
 
     public function __construct()
     {
-        $this->input = new Input('> ');        
+        $this->input = new Input('> ');
     }
 
     public function load(App $app): void

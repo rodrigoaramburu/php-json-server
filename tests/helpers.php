@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use JsonServer\Middlewares\Handler;
 use Nyholm\Psr7\Factory\Psr17Factory;
+use Minicli\Output\Theme\DefaultTheme;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -45,4 +46,13 @@ function createHandler(): Handler
     });
 
     return $handler;
+}
+
+
+
+
+function s(string $style)
+{
+    $theme = new DefaultTheme();
+    return "\e[0m\e[" . implode(';', $theme->getStyle($style)) .'m';
 }

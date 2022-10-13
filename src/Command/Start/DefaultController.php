@@ -10,36 +10,58 @@ class DefaultController extends CommandController
 {
     public function handle(): void
     {
-        $this->getPrinter()->info('Iniciando Servidor...');
+        if (! function_exists('proc_open')) {
+            $this->getPrinter()->error('function proc_open is disabled');
+            exit;
+        }
+        $port = $this->input->params['port'] ?? '8000';
+        $address = $this->input->params['address'] ?? 'localhost';
 
-        $params = [
+        $this->getPrinter()->info('Iniciando Servidor...');
+        $this->getPrinter()->newline();
+
+        $env = [
             'DATA_DIR' => $this->input->params['data-dir'] ?? getcwd(),
             'USE_STATIC_ROUTE' => in_array('--use-static-route', $this->input->flags) ? 'true' : 'false',
         ];
 
-        $this->startBuildInServer($params);
-    }
-
-    private function startBuildInServer(array $params): void
-    {
-        $env = array_reduce(array_keys($params), function ($carry, $key) use ($params) {
-            $carry .= "$key={$params[$key]} ";
-
-            return $carry;
+        $cwd = $this->input->params['root_package']."/bin/";
+        $this->execShellCommand("php -S $address:$port cliserver.php", $env, $cwd, function ($pipes) use ($address, $port) {
+            $this->getPrinter()->display("Servidor rodando em http://$address:$port");
+            $this->getPrinter()->newline();
+            while (!feof($pipes[2])) {
+                $this->processOutput(fgets($pipes[2]));
+            }
         });
-
-        $port = $this->input->params['port'] ?? '8000';
-        $root_package = $this->input->params['root_package'];
-        $this->execShellCommand($env."php -S localhost:$port ".$root_package.'/bin/build-in-server.php');
     }
 
-    protected function execShellCommand(string $command): string
+    protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandle): void
     {
-        if (! function_exists('exec')) {
-            $this->getPrinter()->error('function exec is disabled');
-            exit;
-        }
+        $proc = proc_open(
+            $command,
+            [
+                0 => ['pipe', 'r'],
+                1 => ['pipe', 'w'],
+                2 => ['pipe', 'w'],
+            ],
+            $pipes,
+            $cwd,
+            $env
+        );
+        $outputHandle($pipes);
+    }
 
-        return exec($command);
+    protected function processOutput(string $output): void
+    {
+        if (str_contains($output, ']:')) {
+            preg_match('/\[(.+)\] \d+\.\d+\.\d+\.\d+\:\d+ \[(\d+)\]: (\w+) (.+)/', $output, $matches);
+
+            list($f, $date, $status, $method, $path) = $matches;
+
+            $status= $status < 400 ? "<success>$status</success>" : "<error>$status</error>";
+            $date = date('Y-m-d H:i:s', strtotime($date));
+            $this->getPrinter()->out("$date <alt>$method</alt> $status - $path");
+            $this->getPrinter()->newline();
+        }
     }
 }
