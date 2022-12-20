@@ -3,12 +3,10 @@
 declare(strict_types=1);
 
 namespace JsonServer\Utils;
-
-use SplStack;
 use Minicli\Output\CLIThemeInterface;
 use Minicli\Output\Theme\DefaultTheme;
 use Minicli\Output\OutputFilterInterface;
-use RuntimeException;
+use SplStack;
 
 class TagFilter implements OutputFilterInterface
 {
@@ -18,6 +16,8 @@ class TagFilter implements OutputFilterInterface
      * @var CLIThemeInterface
      */
     protected CLIThemeInterface $theme;
+
+    private SplStack $stackTag;
 
     /**
      * ColorOutputFilter constructor
@@ -52,40 +52,64 @@ class TagFilter implements OutputFilterInterface
 
     public function filter(string $message, ?string $style = null): string
     {
-        $stack = new SplStack();
+        preg_match_all('#<((\w[^<>]*+)|/(\w[^<>]*+)?)>#ix', $message, $matches, \PREG_OFFSET_CAPTURE);
+        $out = "";
         $offset = 0;
-        do {
-            preg_match('/<(.*)>/U', $message, $output_array, 0, $offset);
-            if (empty($output_array)) {
-                break;
-            }
+        $this->stackTag = new SplStack();
+        foreach($matches[0] as $i => $match){
+            $tag = $match[0];
+            $pos = intval($match[1]);
+            $lenght = $pos-$offset;            
+            $textPart = mb_substr($message, $offset, $lenght);
+            
+            $styleColorCode = $this->getStyleColor($tag);
+            $out .= $textPart . ($styleColorCode ?? $tag); 
 
-            $styleColor = $this->theme->getStyle(str_replace('/', '', $output_array[1]));
-            if ($styleColor == $this->theme->getStyle('default')) {
-                $offset = strpos($message, $output_array[1], $offset) ;
-                continue;
-            }
+            $offset = $pos + mb_strlen($tag);
+        }
+        return $out . mb_substr($message, $offset);
+    }
 
-            if (!str_starts_with($output_array[1], '/')) {
-                $stack->push($styleColor);
-            } else {
-                if ($stack->isEmpty()) {
-                    throw new RuntimeException("tag <$output_array[1]> closes without open");
-                }
-                $stack->pop();
-                $styleColor = !$stack->isEmpty() ? $stack->top() : $this->theme->getStyle($style);
-            }
+    private function getStyleColor($tag): ?string
+    {
+        $tag = trim($tag, '<>');
+        
+        if( !$this->existsStyle($tag) ){
+            return null;
+        }
+        
+        if ($this->isOpenTag($tag)) {
+            $styleColor = $this->theme->getStyle($tag);
+            $this->stackTag->push($styleColor);
+            return $this->styleToCode($styleColor);
+        }
 
-            $output_array[1] = str_replace('/', '\/', $output_array[1]);
+        if ($this->stackTag->isEmpty()) {
+            throw new \RuntimeException("tag <$tag> closes without open");
+        }
+        
+        $this->stackTag->pop();
+        $styleColor = !$this->stackTag->isEmpty() 
+            ? $this->stackTag->top() 
+            : $this->theme->getStyle('default');
+    
 
-            $message = preg_replace(
-                '/<'.$output_array[1].'>/U',
-                "\e[0m\e[".implode(';', $styleColor).'m',
-                $message,
-                1
-            );
-        } while (!empty($output_array));
+        return $this->styleToCode($styleColor);
+    }
 
-        return $message;
+    private function styleToCode(array $styleColor): string
+    {
+        return "\e[0m\e[".implode(';', $styleColor).'m';
+    }
+
+    private function isOpenTag($tag): bool
+    {
+        return !str_starts_with($tag, '/');
+    }
+
+    private function existsStyle(string $tag): bool
+    {
+        $styles = array_keys($this->theme->styles);
+        return in_array(str_replace('/', '', $tag), $styles);
     }
 }
