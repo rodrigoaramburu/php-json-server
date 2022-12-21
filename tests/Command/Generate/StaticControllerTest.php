@@ -19,6 +19,8 @@ beforeEach(function () {
     $this->questionMock = Mockery::mock(Question::class);
     $this->questionMock->shouldReceive('load');
     $this->commandApp->addService('question', $this->questionMock);
+
+    if(!file_exists(__DIR__.'/../../tmp/')) mkdir(__DIR__.'/../../tmp/');
     chdir(__DIR__.'/../../tmp/');
 });
 
@@ -31,6 +33,8 @@ afterEach(function () {
             unlink($file);
         }
     }
+    if(file_exists(__DIR__.'/../../tmp/data')) rmdir(__DIR__.'/../../tmp/data');
+    if(file_exists(__DIR__.'/../../tmp/')) rmdir(__DIR__.'/../../tmp/');
 });
 
 test('should generate static.json with values from param', function () {

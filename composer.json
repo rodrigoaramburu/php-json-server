@@ -38,7 +38,7 @@
     },
     "bin":["bin/json-server"],
     "scripts": {
-        "lint": "./vendor/bin/pint --preset=psr12",
+        "pint": "./vendor/bin/pint --preset=psr12",
         "test": "./vendor/bin/pest",
         "coverage": "XDEBUG_MODE=coverage ./vendor/bin/pest --coverage-html coverage"
     }

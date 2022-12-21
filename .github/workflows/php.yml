@@ -24,4 +24,4 @@ jobs:
       run: composer test
 
     - name: Run php pint
-      run: composer lint
+      run: composer pint

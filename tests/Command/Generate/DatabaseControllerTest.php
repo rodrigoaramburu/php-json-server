@@ -12,7 +12,7 @@ beforeEach(function () {
     ];
 
     $this->commandApp = new App($config);
-
+    if(!file_exists(__DIR__.'/../../tmp/')) mkdir(__DIR__.'/../../tmp/');
     chdir(__DIR__.'/../../tmp/');
 });
 
@@ -26,6 +26,8 @@ afterEach(function () {
             unlink($file);
         }
     }
+    if(file_exists(__DIR__.'/../../tmp/data')) rmdir(__DIR__.'/../../tmp/data');
+    if(file_exists(__DIR__.'/../../tmp/')) rmdir(__DIR__.'/../../tmp/');
 });
 
 test('should generate file with resources in current dir', function () {
