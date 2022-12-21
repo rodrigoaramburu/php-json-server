@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 namespace JsonServer\Utils;
+
 use Minicli\Output\CLIThemeInterface;
 use Minicli\Output\Theme\DefaultTheme;
 use Minicli\Output\OutputFilterInterface;
@@ -56,14 +57,14 @@ class TagFilter implements OutputFilterInterface
         $out = "";
         $offset = 0;
         $this->stackTag = new SplStack();
-        foreach($matches[0] as $i => $match){
+        foreach ($matches[0] as $i => $match) {
             $tag = $match[0];
             $pos = intval($match[1]);
-            $lenght = $pos-$offset;            
+            $lenght = $pos-$offset;
             $textPart = mb_substr($message, $offset, $lenght);
-            
+
             $styleColorCode = $this->getStyleColor($tag);
-            $out .= $textPart . ($styleColorCode ?? $tag); 
+            $out .= $textPart . ($styleColorCode ?? $tag);
 
             $offset = $pos + mb_strlen($tag);
         }
@@ -73,11 +74,11 @@ class TagFilter implements OutputFilterInterface
     private function getStyleColor($tag): ?string
     {
         $tag = trim($tag, '<>');
-        
-        if( !$this->existsStyle($tag) ){
+
+        if (!$this->existsStyle($tag)) {
             return null;
         }
-        
+
         if ($this->isOpenTag($tag)) {
             $styleColor = $this->theme->getStyle($tag);
             $this->stackTag->push($styleColor);
@@ -87,12 +88,12 @@ class TagFilter implements OutputFilterInterface
         if ($this->stackTag->isEmpty()) {
             throw new \RuntimeException("tag <$tag> closes without open");
         }
-        
+
         $this->stackTag->pop();
-        $styleColor = !$this->stackTag->isEmpty() 
-            ? $this->stackTag->top() 
+        $styleColor = !$this->stackTag->isEmpty()
+            ? $this->stackTag->top()
             : $this->theme->getStyle('default');
-    
+
 
         return $this->styleToCode($styleColor);
     }

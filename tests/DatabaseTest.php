@@ -23,7 +23,7 @@ afterEach(function () {
 
 test('should throw an exception if database file dont exist', function () {
     $database = new Database(__DIR__.'/fixture/db-posts-missing.json');
-})->throws(RuntimeException::class, 'cannot open file '.__DIR__.'/fixture/db-posts-missing.json');
+})->throws(\Exception::class, 'cannot open file '.__DIR__.'/fixture/db-posts-missing.json');
 
 test('should return data from resource', function () {
     $database = new Database(__DIR__.'/fixture/db-posts.json');

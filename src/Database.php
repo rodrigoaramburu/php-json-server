@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
-use ErrorException;
-use InvalidArgumentException;
+use JsonServer\Utils\JsonFileWriter;
 use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
 class Database
@@ -14,32 +13,17 @@ class Database
 
     private array $resources = [];
 
-    public function __construct(string $databasefile = 'database.json')
+    private JsonFileWriter $jsonFileWriter;
+
+    public function __construct(string $databaseFile = 'database.json')
     {
-        try {
-            $this->fileDb = fopen($databasefile, 'r+b');
-
-            flock($this->fileDb, LOCK_EX);
-            $jsonString = filesize($databasefile) > 0 ? fread($this->fileDb, filesize($databasefile)) : null;
-            if ($jsonString !== null) {
-                $resources = json_decode($jsonString, true);
-
-                if (is_array($resources)) {
-                    foreach ($resources as $key => $resource) {
-                        $this->resources[$key] = $resource;
-                    }
-                }
-            } else {
-                throw new InvalidArgumentException('data is not a JSON string');
+        $this->jsonFileWriter = new JsonFileWriter(mode: 'r+b');
+        $resources = $this->jsonFileWriter->loadFile($databaseFile);
+        if (is_array($resources)) {
+            foreach ($resources as $key => $resource) {
+                $this->resources[$key] = $resource;
             }
-        } catch (ErrorException $e) {
-            throw new \RuntimeException("cannot open file $databasefile");
         }
-    }
-
-    public function __destruct()
-    {
-        flock($this->fileDb, LOCK_UN);
     }
 
     public function from(string $resourceName): Repository
@@ -54,9 +38,7 @@ class Database
     public function save(string $resourceName, array $data): void
     {
         $this->resources[$resourceName] = $data;
-        ftruncate($this->fileDb, 0);
-        rewind($this->fileDb);
-        fwrite($this->fileDb, json_encode($this->resources, JSON_PRETTY_PRINT));
+        $this->jsonFileWriter->writeFile($this->resources);
     }
 
     public function embedResources(): array

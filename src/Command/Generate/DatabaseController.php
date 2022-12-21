@@ -4,40 +4,33 @@ declare(strict_types=1);
 
 namespace JsonServer\Command\Generate;
 
-use JsonServer\Utils\JsonFileTrait;
+use JsonServer\Utils\JsonFileWriter;
 use Minicli\Command\CommandController;
 
 class DatabaseController extends CommandController
 {
-    use JsonFileTrait;
+    private JsonFileWriter $jsonFileWriter;
+
+    public function __construct()
+    {
+        $this->jsonFileWriter = new JsonFileWriter();
+    }
 
     public function handle(): void
     {
         $databaseFileName = $this->hasParam('filename') ? getcwd().'/'.$this->getParam('filename') : getcwd().'/database.json';
-        $database = $this->loadFile($databaseFileName);
+
+        $database = $this->jsonFileWriter->loadOrCreateFile($databaseFileName);
 
         $resourcesNames = array_slice($this->getArgs(), 3);
 
-        $database = $database + array_combine($resourcesNames, array_fill(0, count($resourcesNames), []));
+        $database = $database + $this->initResourcesEmpty($resourcesNames);
 
         $database['embed-resources'] = $this->embedParse();
 
-        $this->writeFile($database);
+        $this->jsonFileWriter->writeFile($database);
 
-        $this->getPrinter()->display("File created: <success>{$databaseFileName}</success>");
-        $this->getPrinter()->display('with resources: ');
-        foreach ($resourcesNames as $value) {
-            $this->getPrinter()->out("\t<success>$value</success>");
-            $this->getPrinter()->newline();
-        }
-        $this->getPrinter()->display('with relations: ');
-        foreach ($database['embed-resources'] as $key => $value) {
-            $this->getPrinter()->out("\t<success>$key = ".implode(', ', $value) . "</success>");
-            $this->getPrinter()->newline();
-        }
-
-        $this->getPrinter()->newline();
-        $this->getPrinter()->newline();
+        $this->showResult($databaseFileName, $database);
     }
 
     public function embedParse(): array
@@ -56,5 +49,32 @@ class DatabaseController extends CommandController
         }
 
         return $embed;
+    }
+
+
+    private function showResult(string $databaseFileName, array $database): void
+    {
+        $this->getPrinter()->display("File created: <success>{$databaseFileName}</success>");
+        $this->getPrinter()->display('with resources: ');
+        foreach (array_keys($database) as $value) {
+            if ($value === 'embed-resources') {
+                continue;
+            }
+            $this->getPrinter()->out("\t<success>$value</success>");
+            $this->getPrinter()->newline();
+        }
+        $this->getPrinter()->display('with relations: ');
+        foreach ($database['embed-resources'] as $key => $value) {
+            $this->getPrinter()->out("\t<success>$key = ".implode(', ', $value) . "</success>");
+            $this->getPrinter()->newline();
+        }
+
+        $this->getPrinter()->newline();
+        $this->getPrinter()->newline();
+    }
+
+    private function initResourcesEmpty(array $resourcesNames): array
+    {
+        return array_combine($resourcesNames, array_fill(0, count($resourcesNames), []));
     }
 }

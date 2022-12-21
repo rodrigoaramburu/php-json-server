@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace JsonServer\Command\Generate;
 
-use BadMethodCallException;
 use Faker\Factory;
+use BadMethodCallException;
 use InvalidArgumentException;
-use JsonServer\Utils\JsonFileTrait;
+use JsonServer\Utils\JsonFileWriter;
 use Minicli\Command\CommandController;
 
 class ResourceController extends CommandController
 {
-    use JsonFileTrait;
+    private JsonFileWriter $jsonFileWriter;
 
     public function __construct($faker = null)
     {
@@ -21,12 +21,13 @@ class ResourceController extends CommandController
         } else {
             $this->faker = $faker;
         }
+        $this->jsonFileWriter = new JsonFileWriter();
     }
 
     public function handle(): void
     {
         $databaseFileName = $this->hasParam('filename') ? getcwd().'/'.$this->getParam('filename') : getcwd().'/database.json';
-        $database = $this->loadFile($databaseFileName);
+        $database = $this->jsonFileWriter->loadOrCreateFile($databaseFileName);
 
         $num = (int) ($this->getParam('num') ?? 1);
         $resourceName = $this->getArgs()[3] ?? null;
@@ -45,8 +46,8 @@ class ResourceController extends CommandController
 
         $this->confirmWrite($resourceName, $num, $fields);
 
-        $this->writeFile($database);
-        $this->getPrinter()->display("the data has write in <success>{$this->filename}</success>");
+        $this->jsonFileWriter->writeFile($database);
+        $this->getPrinter()->display("the data has write in <success>{$databaseFileName}</success>");
     }
 
     private function generateResource(array $fieldOptions, string $resourceName, array $database): array

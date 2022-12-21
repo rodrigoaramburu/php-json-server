@@ -29,7 +29,7 @@ class Server
     {
         $this->loadConfig($config);
 
-        $this->database = new Database(databasefile: $this->config['database-file']);
+        $this->database = new Database(databaseFile: $this->config['database-file']);
         $this->psr17Factory = new Psr17Factory();
         $this->inflector = InflectorFactory::create()->build();
     }
