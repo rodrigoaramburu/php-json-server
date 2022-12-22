@@ -7,12 +7,12 @@ namespace JsonServer\Command\Generate;
 use Faker\Factory;
 use BadMethodCallException;
 use InvalidArgumentException;
-use JsonServer\Utils\JsonFileWriter;
+use JsonServer\Utils\JsonFile;
 use Minicli\Command\CommandController;
 
 class ResourceController extends CommandController
 {
-    private JsonFileWriter $jsonFileWriter;
+    private JsonFile $jsonFile;
 
     public function __construct($faker = null)
     {
@@ -21,13 +21,13 @@ class ResourceController extends CommandController
         } else {
             $this->faker = $faker;
         }
-        $this->jsonFileWriter = new JsonFileWriter();
+        $this->jsonFile = new JsonFile();
     }
 
     public function handle(): void
     {
         $databaseFileName = $this->hasParam('filename') ? getcwd().'/'.$this->getParam('filename') : getcwd().'/database.json';
-        $database = $this->jsonFileWriter->loadOrCreateFile($databaseFileName);
+        $database = $this->jsonFile->loadOrCreateFile($databaseFileName);
 
         $num = (int) ($this->getParam('num') ?? 1);
         $resourceName = $this->getArgs()[3] ?? null;
@@ -46,7 +46,7 @@ class ResourceController extends CommandController
 
         $this->confirmWrite($resourceName, $num, $fields);
 
-        $this->jsonFileWriter->writeFile($database);
+        $this->jsonFile->writeFile($database);
         $this->getPrinter()->display("the data has write in <success>{$databaseFileName}</success>");
     }
 

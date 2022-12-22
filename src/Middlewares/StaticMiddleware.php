@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JsonServer\Middlewares;
 
 use Exception;
+use JsonServer\Utils\JsonFile;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -12,25 +13,20 @@ use Psr\Http\Message\ServerRequestInterface;
 class StaticMiddleware extends Middleware
 {
     private array $routes = [];
-
+    private Psr17Factory $psr17Factory;
     private string $pathBody;
 
     public function __construct(string|array $routes = 'static.json')
     {
+        $this->psr17Factory = new Psr17Factory();
+
         if (is_string($routes)) {
-            if (! file_exists($routes)) {
-                throw new Exception('cannot open file '.$routes);
-            }
-            $r = json_decode(file_get_contents($routes), true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new Exception('cannot read file '.$routes);
-            }
-            $this->routes = $r;
+            $jsonFile = new JsonFile('r+b');
+            $this->routes = $jsonFile->loadFile($routes);
             $this->pathBody = dirname($routes);
-        }
-        if (is_array($routes)) {
-            $this->routes = $routes;
-        }
+            return;
+        }        
+        $this->routes = $routes;
     }
 
     public function process(ServerRequestInterface $request, Handler $handler): ResponseInterface
@@ -53,32 +49,45 @@ class StaticMiddleware extends Middleware
         if (array_key_exists($request->getMethod(), $route)) {
             return $route[$request->getMethod()];
         }
-
-        return null;
     }
 
     private function response(array $route): ResponseInterface
     {
-        $psr17Factory = new Psr17Factory();
+        $response = $this->psr17Factory->createResponse(intval($route['statusCode']) ?? 200)
+                        ->withBody($this->psr17Factory->createStream($route['body'] ?? ''));
 
-        $response = $psr17Factory->createResponse(intval($route['statusCode']) ?? 200)
-                        ->withBody($psr17Factory->createStream($route['body'] ?? ''));
 
-        if (array_key_exists('body-file', $route)) {
-            $file = $this->pathBody.'/'.$route['body-file'];
-            if (! file_exists($file)) {
-                throw new Exception('file not found: '.$file);
-            }
+        $response = $this->addBodyFromFileIfExist($route['body-file'] ?? null, $response);
 
-            $response = $response->withBody(
-                $psr17Factory->createStream(file_get_contents($file) ?? '')
-            );
-        }
-
-        foreach ($route['headers'] ?? [] as $header => $value) {
-            $response = $response->withHeader($header, $value);
-        }
+        $response = $this->addHeaderToResponse($route['headers'] ?? [], $response);
 
         return $response;
+    }
+
+
+    private function addHeaderToResponse(array $headers, ResponseInterface $response): ResponseInterface
+    {
+        foreach ($headers as $header => $value) {
+            $response = $response->withHeader($header, $value);
+        } 
+        return $response; 
+    }
+
+    private function addBodyFromFileIfExist(?string $bodyFile, ResponseInterface $response): ResponseInterface
+    {
+        if ($bodyFile === null) {
+            return $response;
+        }
+
+        $file = $this->pathBody.'/'.$bodyFile;
+        if (! file_exists($file)) {
+            throw new Exception('file not found: '.$file);
+        }
+
+        return $response->withBody(
+            $this->psr17Factory->createStream(file_get_contents($file) ?? '')
+        );
+        
+        
     }
 }

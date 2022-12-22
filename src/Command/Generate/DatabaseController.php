@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace JsonServer\Command\Generate;
 
-use JsonServer\Utils\JsonFileWriter;
+use JsonServer\Utils\JsonFile;
 use Minicli\Command\CommandController;
 
 class DatabaseController extends CommandController
 {
-    private JsonFileWriter $jsonFileWriter;
+    private jsonFile $jsonFile;
 
     public function __construct()
     {
-        $this->jsonFileWriter = new JsonFileWriter();
+        $this->jsonFile = new JsonFile();
     }
 
     public function handle(): void
     {
         $databaseFileName = $this->hasParam('filename') ? getcwd().'/'.$this->getParam('filename') : getcwd().'/database.json';
 
-        $database = $this->jsonFileWriter->loadOrCreateFile($databaseFileName);
+        $database = $this->jsonFile->loadOrCreateFile($databaseFileName);
 
         $resourcesNames = array_slice($this->getArgs(), 3);
 
@@ -28,7 +28,7 @@ class DatabaseController extends CommandController
 
         $database['embed-resources'] = $this->embedParse();
 
-        $this->jsonFileWriter->writeFile($database);
+        $this->jsonFile->writeFile($database);
 
         $this->showResult($databaseFileName, $database);
     }

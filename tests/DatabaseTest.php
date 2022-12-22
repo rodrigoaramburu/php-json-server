@@ -236,3 +236,16 @@ test('should order by a field in desc order', function () {
     expect($data[2]['title'])->toBe('Title 2');
     expect($data[3]['title'])->toBe('Title 1');
 });
+
+test('should order by field asc with two equals values',function(){
+    $dbFileJson = __DIR__.'/fixture/db-posts-shuffled-equals.json';
+
+    $database = new Database($dbFileJson);
+
+    $data = $database->from('posts')->query()->orderBy('title', Query::ORDER_ASC)->get();
+
+    expect($data[0]['title'])->toBe('Title 1');
+    expect($data[1]['title'])->toBe('Title 1');
+    expect($data[2]['title'])->toBe('Title 2');
+    expect($data[3]['title'])->toBe('Title 3');
+});

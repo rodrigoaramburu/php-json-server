@@ -44,14 +44,6 @@ test('should return a response from an file', function () {
     expect($response->getHeader('header-two')[0])->toBe('4321');
 });
 
-test('shuold throw exception routes file not valid', function () {
-    $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-error.json');
-})->throws(Exception::class, 'cannot read file '.__DIR__.'/../fixture/static-with-error.json');
-
-test('shuold throw exception routes file not exist', function () {
-    $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-missing.json');
-})->throws(Exception::class, 'cannot open file '.__DIR__.'/../fixture/static-missing.json');
-
 test('should get response body from file if specified', function () {
     $middleware = new StaticMiddleware(routes: __DIR__.'/../fixture/static-with-body-file.json');
 

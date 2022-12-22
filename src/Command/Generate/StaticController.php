@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace JsonServer\Command\Generate;
 
-use JsonServer\Utils\JsonFileWriter;
+use JsonServer\Utils\JsonFile;
 use Minicli\Command\CommandController;
 
 class StaticController extends CommandController
 {
-    private JsonFileWriter $jsonFileWriter;
+    private JsonFile $jsonFile;
 
     public function __construct()
     {
-        $this->jsonFileWriter = new JsonFileWriter();
+        $this->jsonFile = new JsonFile();
     }
 
     public function handle(): void
@@ -21,7 +21,7 @@ class StaticController extends CommandController
         $staticFileName = $this->hasParam('filename')
             ? getcwd().'/'.$this->getParam('filename')
             : getcwd().'/static.json';
-        $static = $this->jsonFileWriter->loadOrCreateFile($staticFileName);
+        $static = $this->jsonFile->loadOrCreateFile($staticFileName);
 
         $static[$this->getPath()] = [
             $this->getMethod() => [
@@ -31,7 +31,7 @@ class StaticController extends CommandController
             ],
         ];
 
-        $this->jsonFileWriter->writeFile($static);
+        $this->jsonFile->writeFile($static);
         $this->getPrinter()->out("the data has write in <success>{$staticFileName}</success>");
     }
 

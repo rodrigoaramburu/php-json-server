@@ -133,3 +133,13 @@ it('asserts that choice return default options if empty input', function () {
 
     expect($expected)->toMatchArray(['option 3', 'option 1']);
 })->expectOutputRegex('/.*/');
+
+
+test('should that change the style of highlight', function () {
+    $this->inputMock->shouldReceive('read')->andReturn('answer1');
+    $this->questionService->setHighlightStyle('error');
+    $expected = $this->questionService->question('question minicli', 'teste');
+    $this->questionService->setHighlightStyle('success');
+
+    expect($expected)->toBe('answer1');
+})->expectOutputString("\e[1;37m" . "question minicli [".s('error').'teste'.s('default')."] " . "\e[0m" . PHP_EOL);

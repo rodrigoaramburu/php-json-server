@@ -2,10 +2,14 @@
 
 declare(strict_types=1);
 
+use JsonServer\Server;
 use JsonServer\Database;
+use JsonServer\Method\Delete;
+use JsonServer\Method\Get;
+use JsonServer\Method\Post;
+use JsonServer\Method\Put;
 use JsonServer\Middlewares\Handler;
 use JsonServer\Middlewares\Middleware;
-use JsonServer\Server;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -273,3 +277,32 @@ test('should add cors header', function () {
     expect($response->getHeader('Access-Control-Allow-Headers')[0])->toBe('*');
     expect($response->getHeader('Access-Control-Allow-Methods')[0])->toBe('GET, POST, PUT, DELETE, OPTIONS');
 });
+
+
+
+test('should return error if method doesnt exist ', function () {
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+
+    $response = $server->handle('ASDF', '/posts', '');
+
+    expect($response->getStatusCode())->toBe(405);
+
+    $responseData = json_decode((string) $response->getBody(), true);
+
+    expect($responseData['message'])->toBe('Method Not Allowed');
+});
+
+test('should return Delete Handler if request is DELETE', function($method, $clazz){
+    $server = new Server([
+        'database-file' => __DIR__.'/fixture/db-posts.json',
+    ]);
+    $methodHandler = $server->httpMethodHandler($method);
+    expect($methodHandler)->toBeInstanceOf($clazz);
+})->with([
+    ['GET' , Get::class],
+    ['POST' , Post::class],
+    ['PUT' , Put::class],
+    ['DELETE' , Delete::class],
+]);

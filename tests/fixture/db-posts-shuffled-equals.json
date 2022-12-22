@@ -1,0 +1,28 @@
+{
+    "posts":[
+        {   
+            "id": 1,
+            "title":"Title 1",
+            "author": "Rodrigo",
+            "content": "Nunc volutpat ipsum eget sapien ornare..."
+        },
+        {
+            "id": 2,
+            "title":"Title 1",
+            "author": "Rodrigo",
+            "content": "Suspendisse auctor dolor risus, vel posuere libero..."
+        },
+        {
+            "id": 3,
+            "title":"Title 2",
+            "author": "Rodrigo",
+            "content": "Suspendisse auctor dolor risus, vel posuere libero..."
+        },
+        {
+            "id": 4,
+            "title":"Title 3",
+            "author": "Rodrigo",
+            "content": "Suspendisse auctor dolor risus, vel posuere libero..."
+        }
+    ]
+}

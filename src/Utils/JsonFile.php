@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace JsonServer\Utils;
 
 use ErrorException;
+use TypeError;
 
-final class JsonFileWriter
+final class JsonFile
 {
     private mixed $fileDb = null;
 
@@ -27,21 +28,22 @@ final class JsonFileWriter
     public function loadFile(string $filename): array
     {
         try {
-            $this->fileDb = fopen($filename, $this->mode);
-            if (!$this->fileDb) {
+            if(!file_exists($filename) && !str_starts_with($this->mode,'a')){
                 throw new \RuntimeException("cannot open file $filename");
             }
+            $this->fileDb = fopen($filename, $this->mode);
+            
             flock($this->fileDb, LOCK_EX);
 
             $jsonString = filesize($filename) > 0 ? fread($this->fileDb, filesize($filename)) : '{}';
 
-            if ($jsonString === null) {
-                throw new \InvalidArgumentException('data is not a JSON string');
-            }
             return json_decode($jsonString, true);
         } catch(ErrorException $e) {
             throw new \RuntimeException("cannot open file $filename");
+        }catch(TypeError $e){
+            throw new \InvalidArgumentException('data is not a JSON string');
         }
+
     }
 
     public function writeFile(array $data): void

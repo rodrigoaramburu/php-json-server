@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JsonServer;
 
-use JsonServer\Utils\JsonFileWriter;
+use JsonServer\Utils\JsonFile;
 use JsonServer\Exceptions\NotFoundResourceRepositoryException;
 
 class Database
@@ -13,12 +13,12 @@ class Database
 
     private array $resources = [];
 
-    private JsonFileWriter $jsonFileWriter;
+    private JsonFile $jsonFile;
 
     public function __construct(string $databaseFile = 'database.json')
     {
-        $this->jsonFileWriter = new JsonFileWriter(mode: 'r+b');
-        $resources = $this->jsonFileWriter->loadFile($databaseFile);
+        $this->jsonFile = new JsonFile(mode: 'r+b');
+        $resources = $this->jsonFile->loadFile($databaseFile);
         if (is_array($resources)) {
             foreach ($resources as $key => $resource) {
                 $this->resources[$key] = $resource;
@@ -38,7 +38,7 @@ class Database
     public function save(string $resourceName, array $data): void
     {
         $this->resources[$resourceName] = $data;
-        $this->jsonFileWriter->writeFile($this->resources);
+        $this->jsonFile->writeFile($this->resources);
     }
 
     public function embedResources(): array

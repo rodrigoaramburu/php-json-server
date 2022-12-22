@@ -11,44 +11,13 @@ use SplStack;
 
 class TagFilter implements OutputFilterInterface
 {
-    /**
-     * theme
-     *
-     * @var CLIThemeInterface
-     */
     protected CLIThemeInterface $theme;
 
     private SplStack $stackTag;
 
-    /**
-     * ColorOutputFilter constructor
-     *
-     * @param CLIThemeInterface|null $theme If a theme is not set, the default CLITheme will be used.
-     */
     public function __construct(CLIThemeInterface $theme = null)
     {
         $this->theme = $theme ?? new DefaultTheme();
-    }
-
-    /**
-     * Gets the CLITheme
-     *
-     * @return CLIThemeInterface
-     */
-    public function getTheme(): CLIThemeInterface
-    {
-        return $this->theme;
-    }
-
-    /**
-     * Sets the CLITheme
-     *
-     * @param CLIThemeInterface $theme
-     * @return void
-     */
-    public function setTheme(CLIThemeInterface $theme): void
-    {
-        $this->theme = $theme;
     }
 
     public function filter(string $message, ?string $style = null): string

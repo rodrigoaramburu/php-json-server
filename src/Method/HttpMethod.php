@@ -72,11 +72,6 @@ abstract class HttpMethod
         return $this->server->inflector();
     }
 
-    public function config(string $name): mixed
-    {
-        return $this->server->config()[$name];
-    }
-
     protected function embedParent($resources): array
     {
         for ($i = 0; $i < count($resources); $i++) {

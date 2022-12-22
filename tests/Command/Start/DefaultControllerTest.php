@@ -115,3 +115,28 @@ test('should execute shell command', function () {
         expect(fgets($pipes[1]))->toBe("teste\n");
     });
 });
+
+
+test('should handle the output from process', function(){
+    $startCommand = new DefaultController();
+    $startCommand->boot($this->commandApp);
+
+    $stream1 = fopen('php://memory','r+');
+    
+    $stream2 = fopen('php://memory','w+');
+    $stream3 = fopen('php://memory','w+');
+    fwrite($stream3, "[Mon Oct 10 14:06:18 2022] 127.0.0.1:53144 [200]: GET /teste.php");
+    rewind($stream3);
+
+    ob_start();
+    $startCommand->outputHandler([
+        $stream1,
+        $stream2,
+        $stream3,
+    ]);
+    $contents = ob_get_contents();
+    ob_end_clean();
+    expect($contents)->toContain("Servidor rodando em http://localhost:8000");
+    expect($contents)->toContain("2022-10-10 14:06:18 " . s('alt'). "GET" .s('default') . " " . s('success') . '200' . s('default') . " - /teste.php");
+
+});

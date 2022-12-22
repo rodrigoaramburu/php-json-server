@@ -8,14 +8,17 @@ use Minicli\Command\CommandController;
 
 class DefaultController extends CommandController
 {
+    private string $port = '8000';
+    private string $address = 'localhost';
+
     public function handle(): void
     {
         if (! function_exists('proc_open')) {
             $this->getPrinter()->error('function proc_open is disabled');
             exit;
         }
-        $port = $this->input->params['port'] ?? '8000';
-        $address = $this->input->params['address'] ?? 'localhost';
+        $this->port = $this->input->params['port'] ?? '8000';
+        $this->address = $this->input->params['address'] ?? 'localhost';
 
         $this->getPrinter()->info('Iniciando Servidor...');
         $this->getPrinter()->newline();
@@ -26,13 +29,16 @@ class DefaultController extends CommandController
         ];
 
         $cwd = $this->input->params['root_package']."/bin/";
-        $this->execShellCommand("php -S $address:$port cliserver.php", $env, $cwd, function ($pipes) use ($address, $port) {
-            $this->getPrinter()->display("Servidor rodando em http://$address:$port");
+        $this->execShellCommand("php -S $this->address:$this->port cliserver.php", $env, $cwd, $this->outputHandler(...));
+    }
+
+    public function outputHandler(array $pipes)
+    {
+        $this->getPrinter()->display("Servidor rodando em http://$this->address:$this->port");
             $this->getPrinter()->newline();
             while (!feof($pipes[2])) {
                 $this->processOutput(fgets($pipes[2]));
             }
-        });
     }
 
     protected function execShellCommand(string $command, array $env, ?string $cwd, callable $outputHandle): void

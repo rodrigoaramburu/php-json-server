@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace JsonServer\Middlewares;
 
 use Exception;
+use JsonServer\Utils\JsonFile;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -20,10 +21,8 @@ class BasicAuthMiddleware extends Middleware
     public function __construct(array|string $credentials = 'basic-credentials.json')
     {
         if (is_string($credentials)) {
-            if (! file_exists($credentials)) {
-                throw new Exception('cannot open '.$credentials);
-            }
-            $credentials = json_decode(file_get_contents($credentials), true);
+            $jsonFile = new JsonFile();
+            $credentials = $jsonFile->loadFile($credentials);
         }
         if (is_array($credentials)) {
             $this->user = $credentials['user'] ?? '';
@@ -57,6 +56,7 @@ class BasicAuthMiddleware extends Middleware
 
     private function checkIgnore($url): bool
     {
+        
         foreach ($this->ignore as $ignore) {
             $pattern = '/'.str_replace(['*', '/'], ['.*', "\/"], $ignore).'/';
             preg_match($pattern, $url, $match);
